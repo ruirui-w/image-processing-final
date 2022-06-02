@@ -7,6 +7,7 @@ import numpy
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QGraphicsScene, QFileDialog, QMessageBox
+from PySimpleGUI import PySimpleGUI
 from matplotlib import pyplot as plt
 
 from mainWindow import Ui_MainWindow
@@ -129,10 +130,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.imageSubtractAction.triggered.connect(self.__subtractImage)
         # 乘
         self.imageMultiplyAction.triggered.connect(self.__multiplyImage)
+        #融合
+        self.imagefusionAction.triggered.connect(self.__fusionImage)
+        self.imagefusionzixuanAction.triggered.connect(self.__fusionImagezixuan)
         # 缩放
         self.zoomAction.triggered.connect(self.__openZoomWindow)
         # 旋转
         self.rotateAction.triggered.connect(self.__openRotateWindow)
+        #裁剪
+        self.caijianAction.triggered.connect(self.__caijian)
 
         # 直方图均衡菜单
         # 归一化直方图
@@ -155,8 +161,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.meanValueAction.triggered.connect(self.__meanValueFilter)
         # 中值滤波
         self.medianValueAction.triggered.connect(self.__medianValueFilter)
-        #
-        self.zishixianmedianValueAction.triggered.connect(self.__medianValueFilter)
+        #自实现中值滤波
+        self.zishixianmedianValueAction.triggered.connect(self.__zishixianmedianValueFilter)
         # Sobel算子锐化
         self.sobelAction.triggered.connect(self.__sobel)
         # Prewitt算子锐化
@@ -247,11 +253,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # 重写窗口关闭事件函数，来关闭所有窗口。因为默认关闭主窗口子窗口依然存在。
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        # reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
+        # if reply == QMessageBox.Yes:
             sys.exit(0)
-        else:
-            return
+        # else:
+        #     return
 
     # -----------------------------------重置图片-----------------------------------
     # 重置图片到初始状态
@@ -270,6 +276,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 灰度化使得三通道RGB图变成单通道灰度图
             self.__outImageRGB = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+        else:
+            QMessageBox.information(self, '提示', '目前的图像已经是灰度图了！')
+
 
     # 二值化
     def __toBinaryImage(self):
@@ -440,7 +449,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__drawImage(self.outImageView, self.__tempImageRGB)
 
     # -----------------------------------图像运算-----------------------------------
-    # 加、减、乘操作
+    # 加、减、乘、融合操作
     def __operation(self, func):
         if self.__fileName:
             __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
@@ -463,19 +472,48 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.__operation(cv2.subtract)
 
     # 乘
+
     def __multiplyImage(self):
         self.__operation(cv2.multiply)
-
+    #自定义融合
+    def __fusionImagezixuan(self):
+        if self.__fileName:
+                __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
+                if __fileName and os.path.exists(__fileName):
+                    self.__bgrImg = cv2.imread(__fileName)
+                    # 图片尺寸相同才能进行运算
+                    if self.__outImageRGB.shape != self.__bgrImg.shape:
+                        QMessageBox.information(None, '提示', '图像尺寸不一致，无法进行操作！')
+                        return
+        i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入后读入图所占的比重'))
+        if not i:
+            return
+        self.__outImageRGB=cv2.addWeighted(self.__outImageRGB,1-i,self.__bgrImg,i,0)
+        self.__drawImage(self.outImageView, self.__outImageRGB)
+    #1:1融合
+    def __fusionImage(self):
+        if self.__fileName:
+                __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.',
+                                                                'Image Files(*.png *.jpeg *.jpg *.bmp)')
+                if __fileName and os.path.exists(__fileName):
+                    self.__bgrImg = cv2.imread(__fileName)
+                    # 图片尺寸相同才能进行运算
+                    if self.__outImageRGB.shape != self.__bgrImg.shape:
+                        QMessageBox.information(None, '提示', '图像尺寸不一致，无法进行操作！')
+                        return
+        self.__outImageRGB = cv2.addWeighted(self.__outImageRGB, 0.5, self.__bgrImg, 0.5, 0)
+        self.__drawImage(self.outImageView, self.__outImageRGB)
     # 缩放调节子窗口
     def __openZoomWindow(self):
         self.__openPropertyWindow('缩放', self.__changeZoom)
+
 
     # 缩放
     def __changeZoom(self, val):
         # 预处理接收到的信号
         __img = self.__dealSignal(val)
         # 如果修改了属性值
-        # None的size是1 ！！！   why？？？
+        # None的size是1 ！！！
         if numpy.size(__img) > 1:
             # 计算比例
             i = int(val)
@@ -499,6 +537,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__propertyWindow.slider.setMinimum(-360)
             self.__propertyWindow.spinBox.setMaximum(360)
             self.__propertyWindow.spinBox.setMinimum(-360)
+    def __baocuncaijian(self,x,y,w,h):
+         img=self.__tempImageRGB.copy()
+         img=img[y:y+h, x:x+w]
+         self.__outImageRGB = img.copy()
+         self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __caijian(self):
+        crop=self.__tempImageRGB
+        roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
+        x, y, w, h = roi
+        print(roi)
+        cv2.destroyAllWindows()
+        # 显示ROI并保存图片
+        self.__baocuncaijian(x,y,w, h)
 
     # 旋转
     def __changeRotate(self, val):
@@ -656,7 +707,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.medianBlur(self.__outImageRGB, 5)
             self.__drawImage(self.outImageView, self.__outImageRGB)
-
+    def __zishixianmedianValueFilter(self):
+        if self.__fileName:
+            imarray =self.__outImageRGB
+            k=3    #3*3的区域
+            height = imarray.shape[0]
+            width = imarray.shape[1]
+            edge = int((k - 1) / 2)
+            new_arr = numpy.zeros((height, width), dtype="uint8")
+            for i in range(edge, height - edge):
+                for j in range(edge, width - edge):
+                    new_arr[i, j] = numpy.median(
+                        imarray[i - edge:i + edge + 1, j - edge:j + edge + 1])  # 调用np.median求取中值
+            self.__outImageRGB=new_arr
+            self.__drawImage(self.outImageView, self.__outImageRGB)
     # Sobel算子锐化
     def __sobel(self):
         if self.__fileName:
