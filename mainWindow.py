@@ -64,16 +64,29 @@ class Ui_MainWindow(object):
         self.histogramMenu.setObjectName("histogramMenu")
         self.noiseMenu = QtWidgets.QMenu(self.menubar)
         self.noiseMenu.setObjectName("noiseMenu")
+        #以空域滤波三级菜单为例
+        #首先定义一级菜单于menubar主栏
         self.filterMenu = QtWidgets.QMenu(self.menubar)
         self.filterMenu.setObjectName("filterMenu")
+        #然后定义二级菜单，分为锐化与平滑两个菜单，都依赖在一级菜单下
         self.smoothMenu = QtWidgets.QMenu(self.filterMenu)
         self.smoothMenu.setObjectName("smoothMenu")
         self.sharpMenu = QtWidgets.QMenu(self.filterMenu)
         self.sharpMenu.setObjectName("sharpMenu")
+        #之后定义三级菜单，在图像平滑处理的中值滤波中，分为调用opencv库与自设计的模块
+        #这个三级菜单依赖于smoothMenu下
+        self.middleMenu = QtWidgets.QMenu(self.filterMenu)
+        self.middleMenu.setObjectName("middleMenu")
         MainWindow.setMenuBar(self.menubar)
+        #刷新菜单模块，进行更新
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.otherMenu = QtWidgets.QMenu(self.menubar)
+        self.otherMenu.setObjectName("otherMenu")
+#####  以上是对菜单及子菜单的管理，让菜单管理与act实现管理分开，方便修改
+
+#####  定义操作，此时还未与按钮联系
         self.openFileAction = QtWidgets.QAction(MainWindow)
         self.openFileAction.setObjectName("openFileAction")
         self.saveFileAction = QtWidgets.QAction(MainWindow)
@@ -132,6 +145,10 @@ class Ui_MainWindow(object):
         self.meanValueAction.setObjectName("meanValueAction")
         self.medianValueAction = QtWidgets.QAction(MainWindow)
         self.medianValueAction.setObjectName("medianValueAction")
+
+        self.zishixianmedianValueAction = QtWidgets.QAction(MainWindow)
+        self.zishixianmedianValueAction.setObjectName("zishixianmedianValueAction")
+
         self.sobelAction = QtWidgets.QAction(MainWindow)
         self.sobelAction.setObjectName("sobelAction")
         self.prewittAction = QtWidgets.QAction(MainWindow)
@@ -145,11 +162,25 @@ class Ui_MainWindow(object):
         self.addbosongNoiseAction = QtWidgets.QAction(MainWindow)
         self.addbosongNoiseAction.setObjectName("addbosongNoiseAction")
         self.fileMenu.addAction(self.openFileAction)
+        self.fudiaoAction = QtWidgets.QAction(MainWindow)
+        self.fudiaoAction.setObjectName("fudiaoAction")
+        self.maoboliAction = QtWidgets.QAction(MainWindow)
+        self.maoboliAction.setObjectName("maoboliAction")
+
+
         #添加图标标识
         self.openFileAction.setIcon(style.standardIcon(QStyle.SP_DialogOpenButton))
         self.saveFileAction.setIcon(style.standardIcon(QStyle.SP_DialogSaveButton))
+        self.resetImageAction.setIcon(style.standardIcon(QStyle.SP_FileDialogBack))
+        self.saveFileAsAction.setIcon(style.standardIcon(QStyle.SP_DirLinkIcon))
+        self.exitAppAction.setIcon(style.standardIcon(QStyle.SP_BrowserStop))
+        self.fudiaoAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
+        self.maoboliAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
         #添加快捷按钮键
         self.openFileAction.setShortcut(Qt.CTRL + Qt.Key_O)
+        self.saveFileAction.setShortcut(Qt.CTRL + Qt.Key_S)
+        self.resetImageAction.setShortcut(Qt.CTRL + Qt.Key_Z)
+        #对菜单添加操作
         self.fileMenu.addAction(self.saveFileAction)
         self.fileMenu.addAction(self.saveFileAsAction)
         self.fileMenu.addSeparator()
@@ -178,12 +209,16 @@ class Ui_MainWindow(object):
         self.noiseMenu.addAction(self.addImpulseNoiseAction)
         self.noiseMenu.addAction(self.addbosongNoiseAction)
         self.smoothMenu.addAction(self.meanValueAction)
-        self.smoothMenu.addAction(self.medianValueAction)
+        self.middleMenu.addAction(self.medianValueAction)
+        self.middleMenu.addAction(self.zishixianmedianValueAction)
         self.sharpMenu.addAction(self.sobelAction)
         self.sharpMenu.addAction(self.prewittAction)
         self.sharpMenu.addAction(self.laplacianAction)
         self.filterMenu.addAction(self.smoothMenu.menuAction())
         self.filterMenu.addAction(self.sharpMenu.menuAction())
+        self.smoothMenu.addAction(self.middleMenu.menuAction())
+        self.otherMenu.addAction(self.fudiaoAction)
+        self.otherMenu.addAction(self.maoboliAction)
         self.menubar.addAction(self.fileMenu.menuAction())
         self.menubar.addAction(self.resetImageMenu.menuAction())
         self.menubar.addAction(self.grayMappingMenu.menuAction())
@@ -191,11 +226,12 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.histogramMenu.menuAction())
         self.menubar.addAction(self.noiseMenu.menuAction())
         self.menubar.addAction(self.filterMenu.menuAction())
+        self.menubar.addAction(self.otherMenu.menuAction())
         self.menubar.addAction(self.aboutMenu.menuAction())
         # self.menubar.addAction()
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
+    #将英文元素全部于translate部分重置为中文，方便统一管理
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "图像处理软件"))
@@ -209,6 +245,7 @@ class Ui_MainWindow(object):
         self.histogramMenu.setTitle(_translate("MainWindow", "直方图均衡"))
         self.noiseMenu.setTitle(_translate("MainWindow", "噪声"))
         self.filterMenu.setTitle(_translate("MainWindow", "空域滤波"))
+        self.middleMenu.setTitle(_translate("MainWindow", "中值滤波器"))
         self.smoothMenu.setTitle(_translate("MainWindow", "平滑滤波器"))
         self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波器"))
         self.openFileAction.setText(_translate("MainWindow", "打开"))
@@ -240,9 +277,13 @@ class Ui_MainWindow(object):
         self.actiongg_3.setText(_translate("MainWindow", "gg"))
         self.actiongg_4.setText(_translate("MainWindow", "gg"))
         self.meanValueAction.setText(_translate("MainWindow", "均值滤波器"))
-        self.medianValueAction.setText(_translate("MainWindow", "中值滤波器"))
+        self.medianValueAction.setText(_translate("MainWindow", "opencv中值滤波器"))
+        self.zishixianmedianValueAction.setText(_translate("MainWindow", "自实现中值滤波器"))
         self.sobelAction.setText(_translate("MainWindow", "Sobel算子"))
         self.prewittAction.setText(_translate("MainWindow", "Prewitt算子"))
         self.laplacianAction.setText(_translate("MainWindow", "拉普拉斯算子"))
         self.addUiformNoiseAction.setText(_translate("MainWindow", "加椒盐噪声"))
         self.addImpulseNoiseAction.setText(_translate("MainWindow", "加随机噪声"))
+        self.otherMenu.setTitle(_translate("MainWindow", "图片的有趣效果"))
+        self.fudiaoAction.setText(_translate("MainWindow", "浮雕效果"))
+        self.maoboliAction.setText(_translate("MainWindow", "毛玻璃效果"))

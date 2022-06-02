@@ -156,13 +156,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.meanValueAction.triggered.connect(self.__meanValueFilter)
         # 中值滤波
         self.medianValueAction.triggered.connect(self.__medianValueFilter)
+        #
+        self.zishixianmedianValueAction.triggered.connect(self.__medianValueFilter)
         # Sobel算子锐化
         self.sobelAction.triggered.connect(self.__sobel)
         # Prewitt算子锐化
         self.prewittAction.triggered.connect(self.__prewitt)
         # 拉普拉斯算子锐化
         self.laplacianAction.triggered.connect(self.__laplacian)
-
+        #有趣效果菜单
+        #浮雕效果
+        self.fudiaoAction.triggered.connect(self.__fudiao)
+        #毛玻璃效果
+        self.maoboliAction.triggered.connect(self.__maoboli)
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
@@ -242,7 +248,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # 重写窗口关闭事件函数，来关闭所有窗口。因为默认关闭主窗口子窗口依然存在。
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        sys.exit(0)
+        reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            sys.exit(0)
+        else:
+            return
 
     # -----------------------------------重置图片-----------------------------------
     # 重置图片到初始状态
@@ -674,7 +684,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.Laplacian(self.__outImageRGB, -1, ksize=3)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+    # -----------------------------------有趣效果-----------------------------------
+    #浮雕
+    def __fudiao(self):
+        if self.__fileName:
+            def Filter_Fudiao(src_img):
+                # filter=np.array([[-1,0,0],[0,0,0],[0,0,1]])
+                filter = numpy.array([[-1, 0], [0, 1]])
+                row = src_img.shape[0]
+                col = src_img.shape[1]
+                new_img = numpy.zeros([row, col], dtype=numpy.uint8)
+                for i in range(row - 1):
+                    for j in range(col - 1):
+                        new_value = numpy.sum(src_img[i:i + 2, j:j + 2] * filter) + 128  # point multiply
+                        if new_value > 255:
+                            new_value = 255
+                        elif new_value < 0:
+                            new_value = 0
+                        else:
+                            pass
+                        new_img[i, j] = new_value
+                return new_img
 
+            gray_img = cv2.cvtColor(self.__outImageRGB , cv2.COLOR_BGR2GRAY)
+            new_img = Filter_Fudiao(gray_img)
+            self.__outImageRGB = new_img.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    #毛玻璃
+    def __maoboli(self):
+        dst = numpy.zeros_like(self.__outImageRGB)
+        # 获取图像行和列
+        rows, cols = self.__outImageRGB.shape[:2]
+        # 定义偏移量和随机数
+        offsets = 5
+        random_num = 0
+        # 毛玻璃效果: 像素点邻域内随机像素点的颜色替代当前像素点的颜色
+        for y in range(rows - offsets):
+            for x in range(cols - offsets):
+                random_num = numpy.random.randint(0, offsets)
+                dst[y, x] = self.__outImageRGB[y + random_num, x + random_num]
+        self.__outImageRGB = dst.copy()
+        self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):
