@@ -19,7 +19,7 @@ class PropertyWindow(QWidget, Ui_Form):
     # 信号只能在Object的子类中创建，并且只能在创建类的时候的时候添加，而不能等类已经定义完再作为动态属性添加进去。
     # 自定义的信号在__init__()函数之前定义。
     # 自定义一个信号signal，有一个object类型的参数
-    # **** 鬼知道咋回事，想用str类型但会出bug，只好用object了 ****
+    # str->bug
     signal = QtCore.pyqtSignal(object)
 
     # 类初始化
