@@ -21,7 +21,6 @@ class PropertyWindow(QWidget, Ui_Form):
     # 自定义一个信号signal，有一个object类型的参数
     # str->bug
     signal = QtCore.pyqtSignal(object)
-
     # 类初始化
     def __init__(self):
         # 调用父类的初始化
