@@ -94,6 +94,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # 文件菜单
         # 打开文件
         self.openFileAction.triggered.connect(self.__openFileAndShowImage)
+        # 摄像头捕捉
+        self.getFileAction.triggered.connect(self.__getFileAndShowImage)
         # 保存文件
         self.saveFileAction.triggered.connect(self.saveFile)
         # 另存为文件
@@ -258,7 +260,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             sys.exit(0)
         # else:
         #     return
-
+    # 摄像头捕捉事件
+    def __getFileAndShowImage(self):
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 参数为视频设备的id
+        # 如果只有一个摄像头可以填0，表示打开默认的摄像头,
+        # 这里的参数也可以是视频文件名路径，只要把视频文件的具体路径写进去就好
+        while True:
+            ret, frame = cap.read()
+            if frame.any() != None:
+                cv2.imshow('capture', frame)
+            if cv2.waitKey(1) & 0xFF == ord(' '):
+                cv2.destroyAllWindows()
+                break
+        cap.release()
+        cv2.imwrite('image.jpg', frame)
     # -----------------------------------重置图片-----------------------------------
     # 重置图片到初始状态
     def __resetImage(self):

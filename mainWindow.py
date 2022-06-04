@@ -93,6 +93,8 @@ class Ui_MainWindow(object):
 #####  定义操作，此时还未与按钮联系
         self.openFileAction = QtWidgets.QAction(MainWindow)
         self.openFileAction.setObjectName("openFileAction")
+        self.getFileAction = QtWidgets.QAction(MainWindow)
+        self.getFileAction.setObjectName("getFileAction")
         self.saveFileAction = QtWidgets.QAction(MainWindow)
         self.saveFileAction.setObjectName("saveFileAction")
         self.saveFileAsAction = QtWidgets.QAction(MainWindow)
@@ -192,6 +194,7 @@ class Ui_MainWindow(object):
         self.saveFileAction.setShortcut(Qt.CTRL + Qt.Key_S)
         self.resetImageAction.setShortcut(Qt.CTRL + Qt.Key_Z)
         #对菜单添加操作
+        self.fileMenu.addAction(self.getFileAction)
         self.fileMenu.addAction(self.saveFileAction)
         self.fileMenu.addAction(self.saveFileAsAction)
         self.fileMenu.addSeparator()
@@ -309,3 +312,4 @@ class Ui_MainWindow(object):
         self.fudiaoAction.setText(_translate("MainWindow", "浮雕效果"))
         self.maoboliAction.setText(_translate("MainWindow", "毛玻璃效果"))
         self.caijianAction.setText(_translate("MainWindow", "图像裁剪"))
+        self.getFileAction.setText(_translate("MainWindow", "摄像头捕捉图片"))
