@@ -490,7 +490,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.__outImageRGB = func(self.__outImageRGB, __rgbImg)
                     self.__drawImage(self.outImageView, self.__outImageRGB)
                 else:
-                    QMessageBox.information(None, '提示', '图像尺寸不一致，无法进行操作！')
+                    reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
+                                                 QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        return
+                    else:
+                        __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
+                        h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                        h1, w1 = __rgbImg.shape[0], __rgbImg.shape[1]
+                        h = max(h0, h1)
+                        w = max(w0, w1)
+                        org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                        trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                        org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                        trans_image[:h1, :w1, :] = __rgbImg[:, :, :]
+                        self.__outImageRGB = func(org_image, trans_image)
+                        self.__drawImage(self.outImageView, self.__outImageRGB)
 
     # 加
     def __addImage(self):
@@ -510,33 +525,53 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
                 if __fileName and os.path.exists(__fileName):
                     self.__bgrImg = cv2.imread(__fileName)
-                    # 图片尺寸相同才能进行运算
                     if self.__outImageRGB.shape != self.__bgrImg.shape:
-                        QMessageBox.information(None, '提示', '图像尺寸不一致，无法进行操作！')
-                        return
+                        # 图片尺寸相同才能进行运算
+                        reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
+                                                     QMessageBox.No)
+                        if reply == QMessageBox.No:
+                            return
+                        else:
+                            h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                            h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
+                            h = max(h0, h1)
+                            w = max(w0, w1)
+                            self.org_image= numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                            self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                            self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                            self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
         i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入后读入图所占的比重'))
         if not i:
             return
-        self.__outImageRGB=cv2.addWeighted(self.__outImageRGB,1-i,self.__bgrImg,i,0)
+        self.__outImageRGB=cv2.addWeighted(self.org_image,1-i,self.trans_image,i,0)
         self.__drawImage(self.outImageView, self.__outImageRGB)
     #1:1融合
     def __fusionImage(self):
         if self.__fileName:
                 __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.',
-                                                                'Image Files(*.png *.jpeg *.jpg *.bmp)')
+                                                              'Image Files(*.png *.jpeg *.jpg *.bmp)')
                 if __fileName and os.path.exists(__fileName):
                     self.__bgrImg = cv2.imread(__fileName)
                     # 图片尺寸相同才能进行运算
                     if self.__outImageRGB.shape != self.__bgrImg.shape:
-                        QMessageBox.information(None, '提示', '图像尺寸不一致，无法进行操作！')
-                        return
-        self.__outImageRGB = cv2.addWeighted(self.__outImageRGB, 0.5, self.__bgrImg, 0.5, 0)
-        self.__drawImage(self.outImageView, self.__outImageRGB)
+                        # 图片尺寸相同才能进行运算
+                        reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
+                                                     QMessageBox.No)
+                        if reply == QMessageBox.No:
+                            return
+                    h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                    h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
+                    h = max(h0, h1)
+                    w = max(w0, w1)
+                    org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                    trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                    org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                    trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
+                    self.__outImageRGB = cv2.addWeighted(org_image, 0.5, trans_image, 0.5, 0)
+                    self.__drawImage(self.outImageView, self.__outImageRGB)
     # 缩放调节子窗口
     def __openZoomWindow(self):
         self.__openPropertyWindow('缩放', self.__changeZoom)
-
-
     # 缩放
     def __changeZoom(self, val):
         # 预处理接收到的信号
