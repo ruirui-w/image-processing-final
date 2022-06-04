@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import sys
@@ -153,6 +154,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.diedaiAction.triggered.connect(self.__diedai)
         #种子填充
         self.zhongziAction.triggered.connect(self.__zhongzi)
+        #人脸截取
+        self.renlianAction.triggered.connect(self.__renlianjiequ)
         # 噪声菜单
         # 加高斯噪声
         self.addGaussianNoiseAction.triggered.connect(self.__addGasussNoise)
@@ -170,6 +173,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.medianValueAction.triggered.connect(self.__medianValueFilter)
         #自实现中值滤波
         self.zishixianmedianValueAction.triggered.connect(self.__zishixianmedianValueFilter)
+        #高斯滤波
+        self.guasslvboAction.triggered.connect(self.__guasslvbo)
         # Sobel算子锐化
         self.sobelAction.triggered.connect(self.__sobel)
         # Prewitt算子锐化
@@ -185,12 +190,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.katonghuaAction.triggered.connect(self.__katonghua)
         #马赛克效果
         self.masaikeAction.triggered.connect(self.__masaike)
+
         #加框
         self.biankuangAction.triggered.connect(self.__jiakuang)
         #融合加框
         self.ronghekuangAction.triggered.connect(self.__ronghekuang)
         #拼图
         self.pingtuAction.triggered.connect(self.__pingtu)
+        #相片滤镜菜单
+        #怀旧
+        self.huaijiuAction.triggered.connect(self.__huaijiu)
+        #光晕
+        self.guangyunAction.triggered.connect(self.__guangyun)
+        #流年
+        self.liunianAction.triggered.connect(self.__liunian)
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
@@ -486,6 +499,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 __bgrImg = cv2.imread(__fileName)
                 # 图片尺寸相同才能进行运算
                 if self.__outImageRGB.shape == __bgrImg.shape:
+                    # 一定要转颜色空间！！！
                     __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                     self.__outImageRGB = func(self.__outImageRGB, __rgbImg)
                     self.__drawImage(self.outImageView, self.__outImageRGB)
@@ -495,6 +509,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     if reply == QMessageBox.No:
                         return
                     else:
+                        #一定要转颜色空间！
                         __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                         h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
                         h1, w1 = __rgbImg.shape[0], __rgbImg.shape[1]
@@ -525,6 +540,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
                 if __fileName and os.path.exists(__fileName):
                     self.__bgrImg = cv2.imread(__fileName)
+                    self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
+                    self.org_image = self.__outImageRGB.copy()
+                    self.trans_image = self.__bgrImg.copy()
                     if self.__outImageRGB.shape != self.__bgrImg.shape:
                         # 图片尺寸相同才能进行运算
                         reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
@@ -540,7 +558,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
                             self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
                             self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
-        i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入后读入图所占的比重'))
+        i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入:后读入图所占的比重'))
         if not i:
             return
         self.__outImageRGB=cv2.addWeighted(self.org_image,1-i,self.trans_image,i,0)
@@ -553,6 +571,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if __fileName and os.path.exists(__fileName):
                     self.__bgrImg = cv2.imread(__fileName)
                     # 图片尺寸相同才能进行运算
+                    self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
                     if self.__outImageRGB.shape != self.__bgrImg.shape:
                         # 图片尺寸相同才能进行运算
                         reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
@@ -794,7 +813,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         self.__outImageRGB[i][j][1] = 0
                         self.__outImageRGB[i][j][2] = 0
             self.__drawImage(self.outImageView, self.__outImageRGB)
-
+    def __renlianjiequ(self):
+        img=self.__outImageRGB.copy()
+        img=cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # OpenCV人脸识别分类器
+        classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+        color = (0, 255, 0)  # 定义绘制颜色
+        # 调用识别人脸
+        faceRects = classifier.detectMultiScale(img, scaleFactor=1.2, minNeighbors=3, minSize=(32, 32))
+        if len(faceRects):  # 大于0则检测到人脸
+            for faceRect in faceRects:  # 单独框出每一张人脸
+                x, y, w, h = faceRect
+                # 框出人脸
+                cv2.rectangle(img, (x, y), (x + h, y + w), color, 2)
+                # 左眼
+                cv2.circle(img, (x + w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                # 右眼
+                cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                # 嘴巴
+                cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8),color)
+        self.__outImageRGB=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------噪声-----------------------------------
     #加高斯噪声
     def __addGasussNoise(self):
@@ -885,6 +924,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.medianBlur(self.__outImageRGB, 5)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+    #自实现中值滤波
     def __zishixianmedianValueFilter(self):
         if self.__fileName:
             imarray =self.__outImageRGB
@@ -898,6 +938,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     new_arr[i, j] = numpy.median(
                         imarray[i - edge:i + edge + 1, j - edge:j + edge + 1])  # 调用np.median求取中值
             self.__outImageRGB=new_arr
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    #高斯滤波
+    def __guasslvbo(self):
+        if self.__fileName:
+            self.__outImageRGB = cv2.GaussianBlur(self.__outImageRGB, (5, 5), 0)
             self.__drawImage(self.outImageView, self.__outImageRGB)
     # Sobel算子锐化
     def __sobel(self):
@@ -1100,6 +1145,83 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     return
                 self.__outImageRGB=img.copy()
                 self.__drawImage(self.outImageView, self.__outImageRGB)
+
+    # -----------------------------------相片滤镜-----------------------------------
+    #怀旧
+    def __huaijiu(self):
+        if self.__fileName:
+            img=self.__outImageRGB.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            height, width, n = img.shape
+            img2=img.copy()
+            for i in range(height):
+                for j in range(width):
+                    b = img[i, j][0]
+                    g = img[i, j][1]
+                    r = img[i, j][2]
+                    # 计算新的图像中的RGB值
+                    B = int(0.273 * r + 0.535 * g + 0.131 * b)
+                    G = int(0.347 * r + 0.683 * g + 0.167 * b)
+                    R = int(0.395 * r + 0.763 * g + 0.188 * b)  # 约束图像像素值，防止溢出
+                    img2[i, j][0] = max(0, min(B, 255))
+                    img2[i, j][1] = max(0, min(G, 255))
+                    img2[i, j][2] = max(0, min(R, 255))
+            # 显示图像
+                self.__outImageRGB= cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+    #光晕
+    def __guangyun(self):
+        if self.__fileName:
+            img=self.__outImageRGB.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            rows, cols = img.shape[:2]
+            centerX = rows / 2 - 20
+            centerY = cols / 2 + 20
+            radius = min(centerX, centerY)
+            strength = 100
+            dst = numpy.zeros((rows, cols, 3), dtype="uint8")
+            for i in range(rows):
+                for j in range(cols):
+            # 计算当前点到光照中心距离(平面坐标系中两点之间的距离)
+                    distance = math.pow((centerY - j), 2) + math.pow((centerX - i), 2)
+            # 获取原始图像
+                    B = img[i, j][0]
+                    G = img[i, j][1]
+                    R = img[i, j][2]
+                    if (distance < radius * radius):
+            # 按照距离大小计算增强的光照值
+                        result = (int)(strength * (1.0 - math.sqrt(distance) / radius))
+                        B = img[i, j][0] + result
+                        G = img[i, j][1] + result
+                        R = img[i, j][2] + result
+            # 判断边界 防止越界
+                        B = min(255, max(0, B))
+                        G = min(255, max(0, G))
+                        R = min(255, max(0, R))
+                        dst[i, j] = numpy.uint8((B, G, R))
+                    else:
+                        dst[i, j] = numpy.uint8((B, G, R))
+            # 显示图像
+            self.__outImageRGB= cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    # 流年
+    def __liunian(self):
+        if self.__fileName:
+            img=self.__outImageRGB.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            rows, cols = img.shape[:2]
+            dst = numpy.zeros((rows, cols, 3), dtype="uint8")
+            for i in range(rows):
+                for j in range(cols):
+                    B = math.sqrt(img[i, j][0]) * 12
+                    G = img[i, j][1]
+                    R = img[i, j][2]
+                    if B > 255:
+                        B = 255
+                    dst[i, j] = numpy.uint8((B, G, R))
+            # 显示图像
+            self.__outImageRGB= cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+            self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):

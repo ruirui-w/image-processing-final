@@ -54,6 +54,8 @@ class Ui_MainWindow(object):
         self.fileMenu.setObjectName("fileMenu")
         self.resetImageMenu = QtWidgets.QMenu(self.menubar)
         self.resetImageMenu.setObjectName("resetImageMenu")
+        self.lvjingMenu = QtWidgets.QMenu(self.menubar)
+        self.lvjingMenu.setObjectName("lvjingMenu")
         self.aboutMenu = QtWidgets.QMenu(self.menubar)
         self.aboutMenu.setObjectName("aboutMenu")
         self.grayMappingMenu = QtWidgets.QMenu(self.menubar)
@@ -157,6 +159,8 @@ class Ui_MainWindow(object):
         self.diedaiAction.setObjectName("diedaiAction")
         self.zhongziAction = QtWidgets.QAction(MainWindow)
         self.zhongziAction.setObjectName("zhongziAction")
+        self.renlianAction = QtWidgets.QAction(MainWindow)
+        self.renlianAction.setObjectName("renlianAction")
         self.actiongg_3 = QtWidgets.QAction(MainWindow)
         self.actiongg_3.setObjectName("actiongg_3")
         self.actiongg_4 = QtWidgets.QAction(MainWindow)
@@ -165,9 +169,10 @@ class Ui_MainWindow(object):
         self.meanValueAction.setObjectName("meanValueAction")
         self.medianValueAction = QtWidgets.QAction(MainWindow)
         self.medianValueAction.setObjectName("medianValueAction")
-
         self.zishixianmedianValueAction = QtWidgets.QAction(MainWindow)
         self.zishixianmedianValueAction.setObjectName("zishixianmedianValueAction")
+        self.guasslvboAction = QtWidgets.QAction(MainWindow)
+        self.guasslvboAction.setObjectName("guasslvboAction")
 
         self.sobelAction = QtWidgets.QAction(MainWindow)
         self.sobelAction.setObjectName("sobelAction")
@@ -192,11 +197,22 @@ class Ui_MainWindow(object):
         self.katonghuaAction.setObjectName("katonghuaAction")
         self.biankuangAction = QtWidgets.QAction(MainWindow)
         self.biankuangAction.setObjectName("biankuangAction")
+
         self.ronghekuangAction = QtWidgets.QAction(MainWindow)
         self.ronghekuangAction.setObjectName("ronghekuangAction")
         self.pingtuAction = QtWidgets.QAction(MainWindow)
         self.pingtuAction.setObjectName("pingtuAction")
 
+        #相片滤镜
+        #怀旧滤镜
+        self.huaijiuAction = QtWidgets.QAction(MainWindow)
+        self.huaijiuAction.setObjectName("huaijiuAction")
+        #光晕滤镜
+        self.guangyunAction = QtWidgets.QAction(MainWindow)
+        self.guangyunAction.setObjectName("guangyunaction")
+        #流年滤镜
+        self.liunianAction = QtWidgets.QAction(MainWindow)
+        self.liunianAction.setObjectName("liunianAction")
 
         #添加图标标识
         self.openFileAction.setIcon(style.standardIcon(QStyle.SP_DialogOpenButton))
@@ -237,7 +253,7 @@ class Ui_MainWindow(object):
         self.fusionMenu.addAction(self.imagefusionAction)
         self.fusionMenu.addAction(self.imagefusionzixuanAction)
 
-        self.operateImageMenu.addSeparator()
+
         self.operateImageMenu.addAction(self.zoomAction)
         self.operateImageMenu.addAction(self.rotateAction)
 
@@ -247,6 +263,7 @@ class Ui_MainWindow(object):
         self.jiequMenu.addAction(self.caijianAction)
         self.jiequMenu.addAction(self.diedaiAction)
         self.jiequMenu.addAction(self.zhongziAction)
+        self.jiequMenu.addAction(self.renlianAction)
         #
         self.noiseMenu.addAction(self.addGaussianNoiseAction)
         self.noiseMenu.addAction(self.addUiformNoiseAction)
@@ -255,6 +272,7 @@ class Ui_MainWindow(object):
         self.smoothMenu.addAction(self.meanValueAction)
         self.middleMenu.addAction(self.medianValueAction)
         self.middleMenu.addAction(self.zishixianmedianValueAction)
+        self.smoothMenu.addAction(self.guasslvboAction)
         self.sharpMenu.addAction(self.sobelAction)
         self.sharpMenu.addAction(self.prewittAction)
         self.sharpMenu.addAction(self.laplacianAction)
@@ -265,9 +283,16 @@ class Ui_MainWindow(object):
         self.otherMenu.addAction(self.maoboliAction)
         self.otherMenu.addAction(self.masaikeAction)
         self.otherMenu.addAction(self.katonghuaAction)
+
+        self.otherMenu.addSeparator()
         self.otherMenu.addAction(self.biankuangAction)
         self.otherMenu.addAction(self.ronghekuangAction)
         self.otherMenu.addAction(self.pingtuAction)
+        #滤镜菜单
+        self.lvjingMenu.addAction(self.huaijiuAction)
+        self.lvjingMenu.addAction(self.guangyunAction)
+        self.lvjingMenu.addAction(self.liunianAction)
+
         self.menubar.addAction(self.fileMenu.menuAction())
         self.menubar.addAction(self.resetImageMenu.menuAction())
         self.menubar.addAction(self.grayMappingMenu.menuAction())
@@ -277,6 +302,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.noiseMenu.menuAction())
         self.menubar.addAction(self.filterMenu.menuAction())
         self.menubar.addAction(self.otherMenu.menuAction())
+        self.menubar.addAction(self.lvjingMenu.menuAction())
         self.menubar.addAction(self.aboutMenu.menuAction())
         # self.menubar.addAction()
         self.retranslateUi(MainWindow)
@@ -295,11 +321,12 @@ class Ui_MainWindow(object):
         self.histogramMenu.setTitle(_translate("MainWindow", "直方图均衡"))
         self.noiseMenu.setTitle(_translate("MainWindow", "噪声"))
         self.filterMenu.setTitle(_translate("MainWindow", "空域滤波"))
-        self.middleMenu.setTitle(_translate("MainWindow", "中值滤波器"))
-        self.smoothMenu.setTitle(_translate("MainWindow", "平滑滤波器"))
+        self.middleMenu.setTitle(_translate("MainWindow", "中值滤波"))
+        self.smoothMenu.setTitle(_translate("MainWindow", "平滑滤波"))
         self.fusionMenu.setTitle(_translate("MainWindow", "融合"))
-        self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波器"))
+        self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波"))
         self.jiequMenu.setTitle(_translate("MainWindow", "图像截取"))
+        self.lvjingMenu.setTitle(_translate("MainWindow", "相片滤镜"))
         self.openFileAction.setText(_translate("MainWindow", "打开"))
         self.saveFileAction.setText(_translate("MainWindow", "保存"))
         self.saveFileAsAction.setText(_translate("MainWindow", "另存为"))
@@ -330,9 +357,10 @@ class Ui_MainWindow(object):
         self.addbosongNoiseAction.setText(_translate("MainWindow", "加泊松噪声"))
         self.actiongg_3.setText(_translate("MainWindow", "gg"))
         self.actiongg_4.setText(_translate("MainWindow", "gg"))
-        self.meanValueAction.setText(_translate("MainWindow", "均值滤波器"))
-        self.medianValueAction.setText(_translate("MainWindow", "opencv中值滤波器"))
-        self.zishixianmedianValueAction.setText(_translate("MainWindow", "自实现中值滤波器"))
+        self.meanValueAction.setText(_translate("MainWindow", "均值滤波"))
+        self.guasslvboAction.setText(_translate("MainWindow", "高斯滤波"))
+        self.medianValueAction.setText(_translate("MainWindow", "opencv中值滤波"))
+        self.zishixianmedianValueAction.setText(_translate("MainWindow", "自实现中值滤波"))
         self.sobelAction.setText(_translate("MainWindow", "Sobel算子"))
         self.prewittAction.setText(_translate("MainWindow", "Prewitt算子"))
         self.laplacianAction.setText(_translate("MainWindow", "拉普拉斯算子"))
@@ -347,6 +375,10 @@ class Ui_MainWindow(object):
         self.diedaiAction.setText(_translate("MainWindow", "迭代阈值分割"))
         self.zhongziAction.setText(_translate("MainWindow", "区域增长"))
         self.biankuangAction.setText(_translate("MainWindow", "图像加框"))
+        self.renlianAction.setText(_translate("MainWindow", "人脸框取"))
         self.pingtuAction.setText(_translate("MainWindow", "图像拼接"))
         self.ronghekuangAction.setText(_translate("MainWindow", "图像融合加框"))
         self.katonghuaAction.setText(_translate("MainWindow", "图像卡通化"))
+        self.huaijiuAction.setText(_translate("MainWindow", "怀旧"))
+        self.guangyunAction.setText(_translate("MainWindow", "光晕"))
+        self.liunianAction.setText(_translate("MainWindow", "流年"))
