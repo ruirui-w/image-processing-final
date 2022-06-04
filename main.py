@@ -181,6 +181,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.maoboliAction.triggered.connect(self.__maoboli)
         #加框
         self.biankuangAction.triggered.connect(self.__jiakuang)
+        #融合加框
+        self.ronghekuangAction.triggered.connect(self.__ronghekuang)
+        #拼图
+        self.pingtuAction.triggered.connect(self.__pingtu)
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
@@ -236,12 +240,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # RGB转BRG空间后才能通过opencv正确保存
             __bgrImg = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2BGR)
             # 保存
-            cv2.imwrite(fileName, __bgrImg)
+            cv2.imwrite('result.jpg', __bgrImg)
             # 消息提示窗口
             QMessageBox.information(self, '提示', '文件保存成功！')
         else:
             # 消息提示窗口
-            QMessageBox.information(self, '提示', '您还未进行任何变换，文件保存失败！')
+            QMessageBox.information(self, '提示', '文件保存失败！')
 
     # 保存文件，覆盖原始文件
     def saveFile(self):
@@ -710,6 +714,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         plt.imshow(im, cmap=plt.get_cmap("gray"))
         pos = plt.ginput(n)
         return pos  # 得到的pos是列表中包含多个坐标元组
+    def get_color(self, n):  # path表示图片路径，n表示要获取的坐标个数
+        self.im =cv2.imread('11.jpg')
+        plt.imshow(self.im)
+        pos = plt.ginput(n)
+        return pos  # 得到的pos是列表中包含多个坐标元组
     def __zhongzi(self):
         if self.__fileName:
             w=PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数')
@@ -873,7 +882,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.Laplacian(self.__outImageRGB, -1, ksize=3)
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    # -----------------------------------有趣效果-----------------------------------
+    # -----------------------------------美化效果-----------------------------------
     #浮雕
     def __fudiao(self):
         if self.__fileName:
@@ -916,14 +925,82 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.__drawImage(self.outImageView, self.__outImageRGB)
     #加框
     def __jiakuang(self):
+        color0=[255,0,0]
         if self.__fileName:
-            pos=self.get_x_y(1)
+            pos=self.get_color(1)
             i=int(pos[0][0])
             j=int(pos[0][1])
-            color0=self.__outImageRGB[j][i]
+            color0=self.im[j][i]
             img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()), int(str(color0[2]).strip())])
             self.__outImageRGB=img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __ronghekuang(self):
+        ak2=self.__outImageRGB.copy()
+        if self.__fileName:
+            ak1=self.__outImageRGB.copy()
+            h, w, s = ak1.shape
+            __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
+            # 文件存在
+            if __fileName and os.path.exists(__fileName):
+                # 设置打开的文件名属性
+                self.__fileName = __fileName
+                # 读入，记得转换颜色空间！！！
+                __bgrImg = cv2.imread(self.__fileName)
+                ak2= cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
+            else:
+                return
+            ak2 = cv2.resize(ak2, (w, h), interpolation=cv2.INTER_LINEAR)
+            b, g, r = cv2.split(ak2)
+            b_a = numpy.asarray(b)
+            g_a = numpy.asarray(g)
+            r_a = numpy.asarray(r)
+            mc = numpy.zeros((h, w))
+            for i in range(h):
+                for j in range(w):
+                    mc[i][j] = int(b_a[i][j]) + int(g_a[i][j]) + int(r_a[i][j])
+
+            h, w = mc.shape
+            avarege = int((numpy.sum(mc) / (w * h)) * 0.75)
+            gatesize = avarege
+            for i in range(h):
+                for j in range(w):
+                    if mc[i][j] >= gatesize:
+                        ak2[i][j][0] = ak1[i][j][0]
+                        ak2[i][j][1] = ak1[i][j][1]
+                        ak2[i][j][2] = ak1[i][j][2]
+            self.__outImageRGB=ak2.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __pingtu(self):
+        if self.__fileName:
+            # 打开文件选择窗口
+            __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
+            # 文件存在
+            if __fileName and os.path.exists(__fileName):
+                # 设置打开的文件名属性
+                self.__fileName = __fileName
+                # 读入，记得转换颜色空间！！！
+                __bgrImg = cv2.imread(self.__fileName)
+                __bgrImg= cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
+                h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                h1, w1 = __bgrImg.shape[0],__bgrImg.shape[1]
+                h = max(h0, h1)
+                w = max(w0, w1)
+                org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+
+                org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                trans_image[:h1, :w1, :] = __bgrImg[:, :, :]
+                w = PySimpleGUI.popup_get_text('垂直或水平拼接', title='输入拼接方式')
+                if not w:
+                    return
+                if w=='垂直':
+                    img = numpy.concatenate((org_image,trans_image),0)
+                elif w == '水平':
+                    img = numpy.concatenate((org_image, trans_image), 1)
+                else:
+                    return
+                self.__outImageRGB=img.copy()
+                self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):

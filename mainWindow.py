@@ -188,6 +188,10 @@ class Ui_MainWindow(object):
         self.maoboliAction.setObjectName("maoboliAction")
         self.biankuangAction = QtWidgets.QAction(MainWindow)
         self.biankuangAction.setObjectName("biankuangAction")
+        self.ronghekuangAction = QtWidgets.QAction(MainWindow)
+        self.ronghekuangAction.setObjectName("ronghekuangAction")
+        self.pingtuAction = QtWidgets.QAction(MainWindow)
+        self.pingtuAction.setObjectName("pingtuAction")
 
 
         #添加图标标识
@@ -256,6 +260,8 @@ class Ui_MainWindow(object):
         self.otherMenu.addAction(self.fudiaoAction)
         self.otherMenu.addAction(self.maoboliAction)
         self.otherMenu.addAction(self.biankuangAction)
+        self.otherMenu.addAction(self.ronghekuangAction)
+        self.otherMenu.addAction(self.pingtuAction)
         self.menubar.addAction(self.fileMenu.menuAction())
         self.menubar.addAction(self.resetImageMenu.menuAction())
         self.menubar.addAction(self.grayMappingMenu.menuAction())
@@ -334,3 +340,5 @@ class Ui_MainWindow(object):
         self.diedaiAction.setText(_translate("MainWindow", "迭代阈值分割"))
         self.zhongziAction.setText(_translate("MainWindow", "区域增长"))
         self.biankuangAction.setText(_translate("MainWindow", "图像加框"))
+        self.pingtuAction.setText(_translate("MainWindow", "图像拼接"))
+        self.ronghekuangAction.setText(_translate("MainWindow", "图像融合加框"))
