@@ -138,15 +138,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.zoomAction.triggered.connect(self.__openZoomWindow)
         # 旋转
         self.rotateAction.triggered.connect(self.__openRotateWindow)
-        #裁剪
-        self.caijianAction.triggered.connect(self.__caijian)
+
 
         # 直方图均衡菜单
         # 归一化直方图
         self.histogramAction.triggered.connect(self.__histogram)
         # 直方图均衡化
         self.histogramEqAction.triggered.connect(self.__histogramEqualization)
+
         #图像截取菜单
+        # 裁剪
+        self.caijianAction.triggered.connect(self.__caijian)
         #迭代阈值分割
         self.diedaiAction.triggered.connect(self.__diedai)
         #种子填充
@@ -179,6 +181,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.fudiaoAction.triggered.connect(self.__fudiao)
         #毛玻璃效果
         self.maoboliAction.triggered.connect(self.__maoboli)
+        #图像卡通化
+        self.katonghuaAction.triggered.connect(self.__katonghua)
+        #马赛克效果
+        self.masaikeAction.triggered.connect(self.__masaike)
         #加框
         self.biankuangAction.triggered.connect(self.__jiakuang)
         #融合加框
@@ -565,14 +571,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
          img=img[y:y+h, x:x+w]
          self.__outImageRGB = img.copy()
          self.__drawImage(self.outImageView, self.__outImageRGB)
+    #裁剪事件
     def __caijian(self):
-        crop=self.__tempImageRGB
-        roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
-        x, y, w, h = roi
-        print(roi)
-        cv2.destroyAllWindows()
-        # 显示ROI并保存图片
-        self.__baocuncaijian(x,y,w, h)
+        if self.__fileName:
+            crop=self.__tempImageRGB
+            roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
+            x, y, w, h = roi
+            # print(roi)
+            cv2.destroyAllWindows()
+            # 显示ROI并保存图片
+            self.__baocuncaijian(x,y,w,h)
 
     # 旋转
     def __changeRotate(self, val):
@@ -910,19 +918,75 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__drawImage(self.outImageView, self.__outImageRGB)
     #毛玻璃
     def __maoboli(self):
-        dst = numpy.zeros_like(self.__outImageRGB)
-        # 获取图像行和列
-        rows, cols = self.__outImageRGB.shape[:2]
-        # 定义偏移量和随机数
-        offsets = 5
-        random_num = 0
-        # 毛玻璃效果: 像素点邻域内随机像素点的颜色替代当前像素点的颜色
-        for y in range(rows - offsets):
-            for x in range(cols - offsets):
-                random_num = numpy.random.randint(0, offsets)
-                dst[y, x] = self.__outImageRGB[y + random_num, x + random_num]
-        self.__outImageRGB = dst.copy()
-        self.__drawImage(self.outImageView, self.__outImageRGB)
+        if self.__fileName:
+            dst = numpy.zeros_like(self.__outImageRGB)
+            # 获取图像行和列
+            rows, cols = self.__outImageRGB.shape[:2]
+            # 定义偏移量和随机数
+            offsets = 5
+            random_num = 0
+            # 毛玻璃效果: 像素点邻域内随机像素点的颜色替代当前像素点的颜色
+            for y in range(rows - offsets):
+                for x in range(cols - offsets):
+                    random_num = numpy.random.randint(0, offsets)
+                    dst[y, x] = self.__outImageRGB[y + random_num, x + random_num]
+            self.__outImageRGB = dst.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __katonghua(self):
+        if self.__fileName:
+            def edge_mask(img, line_size, blur_value):
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                gray_blur = cv2.medianBlur(gray, blur_value)
+                edges = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, line_size,
+                                              blur_value)
+                return edges
+
+            def color_quantization(img, k):
+                # Transform the image
+                data = numpy.float32(img).reshape((-1, 3))
+
+                # Determine criteria
+                criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.001)
+
+                # Implementing K-Means
+                ret, label, center = cv2.kmeans(data, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+                center = numpy.uint8(center)
+                result = center[label.flatten()]
+                result = result.reshape(img.shape)
+                return result
+            line_size = 7
+            blur_value = 7
+            edges = edge_mask(self.__outImageRGB, line_size, blur_value)
+            total_color = 9
+            img = color_quantization(self.__outImageRGB, total_color)
+            blurred = cv2.bilateralFilter(img, d=7,
+                                          sigmaColor=200, sigmaSpace=200)
+            cartoon = cv2.bitwise_and(blurred, blurred, mask=edges)
+            self.__outImageRGB=cartoon.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __masaike(self):
+        if self.__fileName:
+            crop=self.__outImageRGB.copy()
+            crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+            roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
+            x, y, w, h = roi
+            cv2.destroyAllWindows()
+            img=self.__outImageRGB.copy()
+            # img1 = img[y:y+h, x:x+w]
+            # height, width = img1.shape[0:2]
+            #遍历每一个像素点
+            for row in range(x,x+w):
+                for col in range(y,y+h):
+                    # 如果正好为10的倍数的行并且是10的倍数的列
+                    if row % 10 == 0 and col % 10 == 0:
+                        # 获取到这个像素点的bgr三原色
+                        b, g, r = img[row, col]
+                        # 遍历这个像素点旁边的100个像素点 都等于中间这个像素点
+                        for i in range(10):
+                            for j in range(10):
+                                img[col + j,row + i] = b, g, r
+            self.__outImageRGB=img.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
     #加框
     def __jiakuang(self):
         color0=[255,0,0]
@@ -935,9 +999,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__outImageRGB=img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
     def __ronghekuang(self):
-        ak2=self.__outImageRGB.copy()
         if self.__fileName:
             ak1=self.__outImageRGB.copy()
+            ak2 = self.__outImageRGB.copy()
             h, w, s = ak1.shape
             __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
             # 文件存在
