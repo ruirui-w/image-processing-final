@@ -88,6 +88,9 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.otherMenu = QtWidgets.QMenu(self.menubar)
         self.otherMenu.setObjectName("otherMenu")
+        #图像截取菜单
+        self.jiequMenu = QtWidgets.QMenu(self.menubar)
+        self.jiequMenu.setObjectName("jiequMenu")
 #####  以上是对菜单及子菜单的管理，让菜单管理与act实现管理分开，方便修改
 
 #####  定义操作，此时还未与按钮联系
@@ -150,6 +153,10 @@ class Ui_MainWindow(object):
         self.reColorAction.setObjectName("reColorAction")
         self.addGaussianNoiseAction = QtWidgets.QAction(MainWindow)
         self.addGaussianNoiseAction.setObjectName("addGaussianNoiseAction")
+        self.diedaiAction = QtWidgets.QAction(MainWindow)
+        self.diedaiAction.setObjectName("diedaiAction")
+        self.zhongziAction = QtWidgets.QAction(MainWindow)
+        self.zhongziAction.setObjectName("zhongziAction")
         self.actiongg_3 = QtWidgets.QAction(MainWindow)
         self.actiongg_3.setObjectName("actiongg_3")
         self.actiongg_4 = QtWidgets.QAction(MainWindow)
@@ -189,6 +196,8 @@ class Ui_MainWindow(object):
         self.exitAppAction.setIcon(style.standardIcon(QStyle.SP_BrowserStop))
         self.fudiaoAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
         self.maoboliAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
+        self.aboutAction.setIcon(style.standardIcon(QStyle.SP_MessageBoxQuestion))
+        self.getFileAction.setIcon(style.standardIcon(QStyle.SP_MediaPlay))
         #添加快捷按钮键
         self.openFileAction.setShortcut(Qt.CTRL + Qt.Key_O)
         self.saveFileAction.setShortcut(Qt.CTRL + Qt.Key_S)
@@ -225,6 +234,10 @@ class Ui_MainWindow(object):
 
         self.histogramMenu.addAction(self.histogramAction)
         self.histogramMenu.addAction(self.histogramEqAction)
+        #图像截取
+        self.jiequMenu.addAction(self.diedaiAction)
+        self.jiequMenu.addAction(self.zhongziAction)
+        #
         self.noiseMenu.addAction(self.addGaussianNoiseAction)
         self.noiseMenu.addAction(self.addUiformNoiseAction)
         self.noiseMenu.addAction(self.addImpulseNoiseAction)
@@ -245,6 +258,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.grayMappingMenu.menuAction())
         self.menubar.addAction(self.operateImageMenu.menuAction())
         self.menubar.addAction(self.histogramMenu.menuAction())
+        self.menubar.addAction(self.jiequMenu.menuAction())
         self.menubar.addAction(self.noiseMenu.menuAction())
         self.menubar.addAction(self.filterMenu.menuAction())
         self.menubar.addAction(self.otherMenu.menuAction())
@@ -259,9 +273,9 @@ class Ui_MainWindow(object):
         self.srcImageLabel.setText(_translate("MainWindow", "原图预览"))
         self.outImageLabel.setText(_translate("MainWindow", "处理后的图片预览"))
         self.fileMenu.setTitle(_translate("MainWindow", "文件"))
-        self.resetImageMenu.setTitle(_translate("MainWindow", "重置图片"))
+        self.resetImageMenu.setTitle(_translate("MainWindow", "重置"))
         self.aboutMenu.setTitle(_translate("MainWindow", "关于"))
-        self.grayMappingMenu.setTitle(_translate("MainWindow", "直接灰度映射"))
+        self.grayMappingMenu.setTitle(_translate("MainWindow", "图像预处理与增强"))
         self.operateImageMenu.setTitle(_translate("MainWindow", "图像运算"))
         self.histogramMenu.setTitle(_translate("MainWindow", "直方图均衡"))
         self.noiseMenu.setTitle(_translate("MainWindow", "噪声"))
@@ -270,6 +284,7 @@ class Ui_MainWindow(object):
         self.smoothMenu.setTitle(_translate("MainWindow", "平滑滤波器"))
         self.fusionMenu.setTitle(_translate("MainWindow", "融合"))
         self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波器"))
+        self.jiequMenu.setTitle(_translate("MainWindow", "图像截取"))
         self.openFileAction.setText(_translate("MainWindow", "打开"))
         self.saveFileAction.setText(_translate("MainWindow", "保存"))
         self.saveFileAsAction.setText(_translate("MainWindow", "另存为"))
@@ -313,3 +328,5 @@ class Ui_MainWindow(object):
         self.maoboliAction.setText(_translate("MainWindow", "毛玻璃效果"))
         self.caijianAction.setText(_translate("MainWindow", "图像裁剪"))
         self.getFileAction.setText(_translate("MainWindow", "摄像头捕捉图片"))
+        self.diedaiAction.setText(_translate("MainWindow", "迭代阈值分割"))
+        self.zhongziAction.setText(_translate("MainWindow", "区域增长"))

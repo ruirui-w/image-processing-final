@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-
+from PIL import Image
 import cv2
 import numpy
 from PyQt5 import QtGui, QtCore
@@ -106,7 +106,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # 重置图像菜单
         # 重置图像
         self.resetImageAction.triggered.connect(self.__resetImage)
-
         # 直接灰度映射菜单
         # 灰度化
         self.grayAction.triggered.connect(self.__toGrayImage)
@@ -147,7 +146,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.histogramAction.triggered.connect(self.__histogram)
         # 直方图均衡化
         self.histogramEqAction.triggered.connect(self.__histogramEqualization)
-
+        #图像截取菜单
+        #迭代阈值分割
+        self.diedaiAction.triggered.connect(self.__diedai)
+        #种子填充
+        self.zhongziAction.triggered.connect(self.__zhongzi)
         # 噪声菜单
         # 加高斯噪声
         self.addGaussianNoiseAction.triggered.connect(self.__addGasussNoise)
@@ -282,7 +285,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__outImageRGB = self.__srcImageRGB.copy()
             # 窗口显示图片
             self.__drawImage(self.outImageView, self.__outImageRGB)
-
     # -----------------------------------图像预处理-----------------------------------
     # 灰度化
     def __toGrayImage(self):
@@ -630,6 +632,112 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 gh = cv2.equalizeHist(g)
                 bh = cv2.equalizeHist(b)
                 self.__outImageRGB = cv2.merge((rh, gh, bh))
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+
+    # -----------------------------------图像截取-----------------------------------
+    #迭代算法的实现函数
+    def Iterate_Thresh(self,img, initval, MaxIterTimes=20, thre=1):
+        """ 阈值迭代算法
+         Args:
+          img: 灰度图像
+          initval: 初始阈值
+          MaxIterTimes: 最⼤迭代次数，默认20
+          thre：临界差值，默认为1
+         Return:
+        计算出的阈值
+         """
+        mask1, mask2 = (img > initval), (img <= initval)
+        T1 = numpy.sum(mask1 * img) / numpy.sum(mask1)
+        T2 = numpy.sum(mask2 * img) / numpy.sum(mask2)
+        T = (T1 + T2) / 2
+        # 终⽌条件
+
+        if abs(T - initval) < thre or MaxIterTimes == 0:
+            return T
+        return self.Iterate_Thresh(img, T, MaxIterTimes - 1)
+    def __diedai(self):
+        if self.__fileName:
+            if len(self.__outImageRGB.shape) == 3:
+                reply = QMessageBox.question(self, '确认完成迭代操作吗','提示：当前图片不是灰度图哦，迭代效果可能不好', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return
+                else:
+                    initthre = numpy.mean(self.__outImageRGB)
+                    # 阈值迭代
+                    thresh = self.Iterate_Thresh(self.__outImageRGB, initthre, 50)
+                    dst = cv2.threshold(self.__outImageRGB, thresh, 255, cv2.THRESH_BINARY)[1]
+                    self.__outImageRGB=dst.copy()
+                    self.__drawImage(self.outImageView, self.__outImageRGB)
+            else:
+                initthre = numpy.mean(self.__outImageRGB)
+                # 阈值迭代
+                thresh = self.Iterate_Thresh(self.__outImageRGB, initthre, 50)
+                dst = cv2.threshold(self.__outImageRGB, thresh, 255, cv2.THRESH_BINARY)[1]
+                self.__outImageRGB = dst.copy()
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+    #区域增长算法的实现函数
+    def regionGrow(self,gray, seeds,thresh,p):  # thresh表示与领域的相似距离，小于该距离就合并
+        seedMark = numpy.zeros(gray.shape)
+        # 八邻域
+        if p == 8:
+            connection = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+        # 四邻域
+        elif p == 4:
+            connection = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+        else:
+            connection = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+        # seeds内无元素时候生长停止
+        while len(seeds) != 0:
+            # 栈顶元素出栈
+            pt = seeds.pop(0)
+            for i in range(p):
+                tmpX = int(pt[0] + connection[i][0])
+                tmpY = int(pt[1] + connection[i][1])
+
+                # 检测边界点
+                if tmpX < 0 or tmpY < 0 or tmpX >= gray.shape[0] or tmpY >= gray.shape[1]:
+                    continue
+
+                if abs(int(gray[tmpX, tmpY]) - int(gray[pt])) < thresh and seedMark[tmpX, tmpY] == 0:
+                    seedMark[tmpX, tmpY] = 255
+                    seeds.append((tmpX, tmpY))
+        return seedMark
+
+    def get_x_y(self, n):  # path表示图片路径，n表示要获取的坐标个数
+        im = self.__outImageRGB
+        plt.imshow(im, cmap=plt.get_cmap("gray"))
+        pos = plt.ginput(n)
+        return pos  # 得到的pos是列表中包含多个坐标元组
+    def __zhongzi(self):
+        if self.__fileName:
+            i = int(PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数'))
+            if not i:
+                return
+            gray = cv2.cvtColor(self.__outImageRGB , cv2.COLOR_BGR2GRAY)
+            seeds = self.get_x_y(n=i)  # 获取初始种子
+            print("选取的初始点为：")
+            new_seeds = []
+            for seed in seeds:
+                print(seed)
+                # 下面是需要注意的一点
+                # 第一： 用鼠标选取的坐标为float类型，需要转为int型
+                # 第二：用鼠标选取的坐标为（W,H），而我们使用函数读取到的图片是（行，列），而这对应到原图是（H,W），所以这里需要调换一下坐标位置，这是很多人容易忽略的一点
+                new_seeds.append((int(seed[1]), int(seed[0])))  #
+            result = self.regionGrow(gray, new_seeds, 3, 8)
+            result2 = Image.fromarray(numpy.uint8(result))
+            # result2.show()
+            img2 = cv2.cvtColor(numpy.asarray(result2), cv2.COLOR_RGB2BGR)
+            cv2.imshow("gray mask", img2)
+            cv2.waitKey(0)
+            h = self.__outImageRGB.shape[0]
+            w = self.__outImageRGB.shape[1]
+            #把灰白图中获取到的掩模信息保存到彩色图中，实现彩色图的掩模
+            for i in range(h):
+                for j in range(w):
+                    if result[i][j] != 255:
+                        self.__outImageRGB[i][j][0] = 0
+                        self.__outImageRGB[i][j][1] = 0
+                        self.__outImageRGB[i][j][2] = 0
             self.__drawImage(self.outImageView, self.__outImageRGB)
 
     # -----------------------------------噪声-----------------------------------
