@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-from PIL import Image
+from PIL import Image, ImageOps
 import cv2
 import numpy
 from PyQt5 import QtGui, QtCore
@@ -174,11 +174,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.prewittAction.triggered.connect(self.__prewitt)
         # 拉普拉斯算子锐化
         self.laplacianAction.triggered.connect(self.__laplacian)
-        #有趣效果菜单
+        #图片美化效果菜单
         #浮雕效果
         self.fudiaoAction.triggered.connect(self.__fudiao)
         #毛玻璃效果
         self.maoboliAction.triggered.connect(self.__maoboli)
+        #加框
+        self.biankuangAction.triggered.connect(self.__jiakuang)
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
@@ -710,9 +712,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return pos  # 得到的pos是列表中包含多个坐标元组
     def __zhongzi(self):
         if self.__fileName:
-            i = int(PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数'))
-            if not i:
+            w=PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数')
+            if not w:
                 return
+            i = int(w)
             gray = cv2.cvtColor(self.__outImageRGB , cv2.COLOR_BGR2GRAY)
             seeds = self.get_x_y(n=i)  # 获取初始种子
             print("选取的初始点为：")
@@ -911,6 +914,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 dst[y, x] = self.__outImageRGB[y + random_num, x + random_num]
         self.__outImageRGB = dst.copy()
         self.__drawImage(self.outImageView, self.__outImageRGB)
+    #加框
+    def __jiakuang(self):
+        if self.__fileName:
+            pos=self.get_x_y(1)
+            i=int(pos[0][0])
+            j=int(pos[0][1])
+            color0=self.__outImageRGB[j][i]
+            img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()), int(str(color0[2]).strip())])
+            self.__outImageRGB=img.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):
