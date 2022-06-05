@@ -1652,7 +1652,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):
-        QMessageBox.information(None, '关于作者', '图像处理软件2.1\n\nCopyright © 2022–2099 数媒2002 李子睿\n\n保留一切权利')
+        QMessageBox.information(None, '关于作者', '图像处理软件2.0\n\nCopyright © 2022–2099 数媒2002 李子睿\n\n保留一切权利')
 
 
 if __name__ == '__main__':
