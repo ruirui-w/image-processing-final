@@ -93,6 +93,9 @@ class Ui_MainWindow(object):
         #图像截取菜单
         self.jiequMenu = QtWidgets.QMenu(self.menubar)
         self.jiequMenu.setObjectName("jiequMenu")
+        #特征描述菜单
+        self.tezhengMenu = QtWidgets.QMenu(self.menubar)
+        self.tezhengMenu.setObjectName("tezhengMenu")
 #####  以上是对菜单及子菜单的管理，让菜单管理与act实现管理分开，方便修改
 
 #####  定义操作，此时还未与按钮联系
@@ -220,7 +223,25 @@ class Ui_MainWindow(object):
         #人脸一键美化
         self.renlianmakeupAction = QtWidgets.QAction(MainWindow)
         self.renlianmakeupAction.setObjectName("renlianjiemakeupAction")
-
+        #特征描述
+        #区域面积
+        self.quyumianjiAction = QtWidgets.QAction(MainWindow)
+        self.quyumianjiAction.setObjectName("quyumianjiAction")
+        #区域周长
+        self.quyuzhouchangAction = QtWidgets.QAction(MainWindow)
+        self.quyuzhouchangAction.setObjectName("quyuzhouchangAction")
+        #最小外接矩形面积
+        self.quyujuxingAction = QtWidgets.QAction(MainWindow)
+        self.quyujuxingAction.setObjectName("quyujuxingAction")
+        #细长度
+        self.quyuxichangduAction = QtWidgets.QAction(MainWindow)
+        self.quyuxichangduAction.setObjectName("quyuxichangduAction")
+        #矩形度（区域占空比）（轮廓区域面积除以最小外接矩形面积）
+        self.quyuzhankongbiAction = QtWidgets.QAction(MainWindow)
+        self.quyuzhankongbiAction.setObjectName("quyuzhankongbiAction")
+        #重心
+        self.quyuzhongxinAction = QtWidgets.QAction(MainWindow)
+        self.quyuzhongxinAction.setObjectName("quyuzhongxinAction")
         #添加图标标识
         self.openFileAction.setIcon(style.standardIcon(QStyle.SP_DialogOpenButton))
         self.saveFileAction.setIcon(style.standardIcon(QStyle.SP_DialogSaveButton))
@@ -272,7 +293,20 @@ class Ui_MainWindow(object):
         self.jiequMenu.addAction(self.zhongziAction)
         self.jiequMenu.addAction(self.renlianAction)
         self.jiequMenu.addAction(self.renlianjiequAction)
-        #
+        #特征描述
+        #区域面积
+        self.tezhengMenu.addAction(self.quyumianjiAction)
+        #区域周长
+        self.tezhengMenu.addAction(self.quyuzhouchangAction)
+        #最小外接矩形
+        self.tezhengMenu.addAction(self.quyujuxingAction)
+        #矩形度
+        self.tezhengMenu.addAction(self.quyuzhankongbiAction)
+        #细长度
+        self.tezhengMenu.addAction(self.quyuxichangduAction)
+        #重心
+        self.tezhengMenu.addAction(self.quyuzhongxinAction)
+
         self.noiseMenu.addAction(self.addGaussianNoiseAction)
         self.noiseMenu.addAction(self.addUiformNoiseAction)
         self.noiseMenu.addAction(self.addImpulseNoiseAction)
@@ -308,6 +342,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.grayMappingMenu.menuAction())
         self.menubar.addAction(self.operateImageMenu.menuAction())
         self.menubar.addAction(self.histogramMenu.menuAction())
+        self.menubar.addAction(self.tezhengMenu.menuAction())
         self.menubar.addAction(self.jiequMenu.menuAction())
         self.menubar.addAction(self.noiseMenu.menuAction())
         self.menubar.addAction(self.filterMenu.menuAction())
@@ -336,6 +371,9 @@ class Ui_MainWindow(object):
         self.fusionMenu.setTitle(_translate("MainWindow", "融合"))
         self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波"))
         self.jiequMenu.setTitle(_translate("MainWindow", "图像截取"))
+        self.tezhengMenu.setTitle(_translate("MainWindow", "特征描述"))
+        self.quyumianjiAction.setText(_translate("MainWindow", "面积"))
+        self.quyuzhouchangAction.setText(_translate("MainWindow", "周长"))
         self.lvjingMenu.setTitle(_translate("MainWindow", "相片滤镜与美化"))
         self.openFileAction.setText(_translate("MainWindow", "打开"))
         self.saveFileAction.setText(_translate("MainWindow", "保存"))
@@ -387,7 +425,7 @@ class Ui_MainWindow(object):
         self.zhongziAction.setText(_translate("MainWindow", "区域增长"))
         self.biankuangAction.setText(_translate("MainWindow", "图像加框"))
         self.renlianAction.setText(_translate("MainWindow", "人脸框取"))
-        self.renlianjiequAction.setText(_translate("MainWindow", "人脸截取"))
+        self.renlianjiequAction.setText(_translate("MainWindow", "人脸轮廓勾勒"))
         self.pingtuAction.setText(_translate("MainWindow", "图像拼接"))
         self.ronghekuangAction.setText(_translate("MainWindow", "图像融合加框"))
         self.katonghuaAction.setText(_translate("MainWindow", "图像卡通化"))
@@ -395,3 +433,7 @@ class Ui_MainWindow(object):
         self.guangyunAction.setText(_translate("MainWindow", "光晕"))
         self.liunianAction.setText(_translate("MainWindow", "流年"))
         self.renlianmakeupAction.setText(_translate("MainWindow", "人脸一键美化化妆"))
+        self.quyujuxingAction.setText(_translate("MainWindow", "最小外接矩形面积"))
+        self.quyuzhankongbiAction.setText(_translate("MainWindow", "矩形度"))
+        self.quyuxichangduAction.setText(_translate("MainWindow", "细长度"))
+        self.quyuzhongxinAction.setText(_translate("MainWindow", "重心"))

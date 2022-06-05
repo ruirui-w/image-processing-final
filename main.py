@@ -17,6 +17,7 @@ from propertyWindow import Ui_Form
 import face_recognition
 from PIL import Image, ImageDraw
 
+
 # 预处理窗口类
 # 就是弹出来的调整各种属性值的小窗口
 class PropertyWindow(QWidget, Ui_Form):
@@ -25,6 +26,7 @@ class PropertyWindow(QWidget, Ui_Form):
     # 自定义一个信号signal，有一个object类型的参数
     # str->bug
     signal = QtCore.pyqtSignal(object)
+
     # 类初始化
     def __init__(self):
         # 调用父类的初始化
@@ -74,6 +76,8 @@ class PropertyWindow(QWidget, Ui_Form):
 class MainWindow(QMainWindow, Ui_MainWindow):
     # 类初始化
     def __init__(self):
+        # 提示窗口标识初始化
+        self.tezhengflag = 0
         # 调用父类的初始化
         super(MainWindow, self).__init__()
         # 窗口界面初始化
@@ -134,7 +138,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.imageSubtractAction.triggered.connect(self.__subtractImage)
         # 乘
         self.imageMultiplyAction.triggered.connect(self.__multiplyImage)
-        #融合
+        # 融合
         self.imagefusionAction.triggered.connect(self.__fusionImage)
         self.imagefusionzixuanAction.triggered.connect(self.__fusionImagezixuan)
         # 缩放
@@ -142,23 +146,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # 旋转
         self.rotateAction.triggered.connect(self.__openRotateWindow)
 
-
         # 直方图均衡菜单
         # 归一化直方图
         self.histogramAction.triggered.connect(self.__histogram)
         # 直方图均衡化
         self.histogramEqAction.triggered.connect(self.__histogramEqualization)
 
-        #图像截取菜单
+        # 特征描述菜单
+        # 面积
+        self.quyumianjiAction.triggered.connect(self.__quyumianji)
+        # 周长
+        self.quyuzhouchangAction.triggered.connect(self.__quyuzhouchang)
+        # 最小外接矩形
+        self.quyujuxingAction.triggered.connect(self.__quyujuxing)
+        # 矩形度
+        self.quyuzhankongbiAction.triggered.connect(self.__quyujuxingdu)
+        # 细长度
+        self.quyuxichangduAction.triggered.connect(self.__quyuxichangdu)
+        # 重心
+        self.quyuzhongxinAction.triggered.connect(self.__quyuzhongxin)
+
+        # 图像截取菜单
         # 裁剪
         self.caijianAction.triggered.connect(self.__caijian)
-        #迭代阈值分割
+        # 迭代阈值分割
         self.diedaiAction.triggered.connect(self.__diedai)
-        #种子填充
+        # 种子填充
         self.zhongziAction.triggered.connect(self.__zhongzi)
-        #人脸框取
+        # 人脸框取
         self.renlianAction.triggered.connect(self.__renlianjiequ)
-        #人脸轮廓(单张脸)
+        # 人脸轮廓(单张脸)
         self.renlianjiequAction.triggered.connect(self.__renlianjiequ2)
         # 噪声菜单
         # 加高斯噪声
@@ -167,7 +184,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.addUiformNoiseAction.triggered.connect(self.__addUniformNoise)
         # 加脉冲（椒盐）噪声
         self.addImpulseNoiseAction.triggered.connect(self.__addImpulseNoise)
-        #加随机噪声
+        # 加随机噪声
         self.addbosongNoiseAction.triggered.connect(self.__addbosongNoise)
 
         # 空域滤波菜单
@@ -175,9 +192,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.meanValueAction.triggered.connect(self.__meanValueFilter)
         # 中值滤波
         self.medianValueAction.triggered.connect(self.__medianValueFilter)
-        #自实现中值滤波
+        # 自实现中值滤波
         self.zishixianmedianValueAction.triggered.connect(self.__zishixianmedianValueFilter)
-        #高斯滤波
+        # 高斯滤波
         self.guasslvboAction.triggered.connect(self.__guasslvbo)
         # Sobel算子锐化
         self.sobelAction.triggered.connect(self.__sobel)
@@ -187,30 +204,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.laplacianAction.triggered.connect(self.__laplacian)
         # Canny算子锐化
         self.CannyAction.triggered.connect(self.__CannyAction)
-        #图片美化效果菜单
-        #浮雕效果
+        # 图片美化效果菜单
+        # 浮雕效果
         self.fudiaoAction.triggered.connect(self.__fudiao)
-        #毛玻璃效果
+        # 毛玻璃效果
         self.maoboliAction.triggered.connect(self.__maoboli)
-        #图像卡通化
+        # 图像卡通化
         self.katonghuaAction.triggered.connect(self.__katonghua)
-        #马赛克效果
+        # 马赛克效果
         self.masaikeAction.triggered.connect(self.__masaike)
 
-        #加框
+        # 加框
         self.biankuangAction.triggered.connect(self.__jiakuang)
-        #融合加框
+        # 融合加框
         self.ronghekuangAction.triggered.connect(self.__ronghekuang)
-        #拼图
+        # 拼图
         self.pingtuAction.triggered.connect(self.__pingtu)
-        #相片滤镜菜单
-        #怀旧
+        # 相片滤镜菜单
+        # 怀旧
         self.huaijiuAction.triggered.connect(self.__huaijiu)
-        #光晕
+        # 光晕
         self.guangyunAction.triggered.connect(self.__guangyun)
-        #流年
+        # 流年
         self.liunianAction.triggered.connect(self.__liunian)
-        #人脸一键美化
+        # 人脸一键美化
         self.renlianmakeupAction.triggered.connect(self.__renlianmakeup)
         # 关于菜单
         # 关于作者
@@ -293,9 +310,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
         # if reply == QMessageBox.Yes:
-            sys.exit(0)
-        # else:
-        #     return
+        sys.exit(0)
+
+    # else:
+    #     return
     # 摄像头捕捉事件
     def __getFileAndShowImage(self):
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 参数为视频设备的id
@@ -310,6 +328,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 break
         cap.release()
         cv2.imwrite('image.jpg', frame)
+
     # -----------------------------------重置图片-----------------------------------
     # 重置图片到初始状态
     def __resetImage(self):
@@ -318,6 +337,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__outImageRGB = self.__srcImageRGB.copy()
             # 窗口显示图片
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     # -----------------------------------图像预处理-----------------------------------
     # 灰度化
     def __toGrayImage(self):
@@ -328,7 +348,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__drawImage(self.outImageView, self.__outImageRGB)
         else:
             QMessageBox.information(self, '提示', '目前的图像已经是灰度图了！')
-
 
     # 二值化
     def __toBinaryImage(self):
@@ -517,7 +536,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     if reply == QMessageBox.No:
                         return
                     else:
-                        #一定要转颜色空间！
+                        # 一定要转颜色空间！
                         __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                         h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
                         h1, w1 = __rgbImg.shape[0], __rgbImg.shape[1]
@@ -542,63 +561,67 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def __multiplyImage(self):
         self.__operation(cv2.multiply)
-    #自定义融合
+
+    # 自定义融合
     def __fusionImagezixuan(self):
         if self.__fileName:
-                __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
-                if __fileName and os.path.exists(__fileName):
-                    self.__bgrImg = cv2.imread(__fileName)
-                    self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
-                    self.org_image = self.__outImageRGB.copy()
-                    self.trans_image = self.__bgrImg.copy()
-                    if self.__outImageRGB.shape != self.__bgrImg.shape:
-                        # 图片尺寸相同才能进行运算
-                        reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
-                                                     QMessageBox.No)
-                        if reply == QMessageBox.No:
-                            return
-                        else:
-                            h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
-                            h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
-                            h = max(h0, h1)
-                            w = max(w0, w1)
-                            self.org_image= numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
-                            self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
-                            self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
-                            self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
+            __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
+            if __fileName and os.path.exists(__fileName):
+                self.__bgrImg = cv2.imread(__fileName)
+                self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
+                self.org_image = self.__outImageRGB.copy()
+                self.trans_image = self.__bgrImg.copy()
+                if self.__outImageRGB.shape != self.__bgrImg.shape:
+                    # 图片尺寸相同才能进行运算
+                    reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
+                                                 QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        return
+                    else:
+                        h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                        h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
+                        h = max(h0, h1)
+                        w = max(w0, w1)
+                        self.org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                        self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                        self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                        self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
         i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入:后读入图所占的比重'))
         if not i:
             return
-        self.__outImageRGB=cv2.addWeighted(self.org_image,1-i,self.trans_image,i,0)
+        self.__outImageRGB = cv2.addWeighted(self.org_image, 1 - i, self.trans_image, i, 0)
         self.__drawImage(self.outImageView, self.__outImageRGB)
-    #1:1融合
+
+    # 1:1融合
     def __fusionImage(self):
         if self.__fileName:
-                __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.',
-                                                              'Image Files(*.png *.jpeg *.jpg *.bmp)')
-                if __fileName and os.path.exists(__fileName):
-                    self.__bgrImg = cv2.imread(__fileName)
+            __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.',
+                                                        'Image Files(*.png *.jpeg *.jpg *.bmp)')
+            if __fileName and os.path.exists(__fileName):
+                self.__bgrImg = cv2.imread(__fileName)
+                # 图片尺寸相同才能进行运算
+                self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
+                if self.__outImageRGB.shape != self.__bgrImg.shape:
                     # 图片尺寸相同才能进行运算
-                    self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
-                    if self.__outImageRGB.shape != self.__bgrImg.shape:
-                        # 图片尺寸相同才能进行运算
-                        reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
-                                                     QMessageBox.No)
-                        if reply == QMessageBox.No:
-                            return
-                    h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
-                    h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
-                    h = max(h0, h1)
-                    w = max(w0, w1)
-                    org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
-                    trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
-                    org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
-                    trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
-                    self.__outImageRGB = cv2.addWeighted(org_image, 0.5, trans_image, 0.5, 0)
-                    self.__drawImage(self.outImageView, self.__outImageRGB)
+                    reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
+                                                 QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        return
+                h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
+                h1, w1 = self.__bgrImg.shape[0], self.__bgrImg.shape[1]
+                h = max(h0, h1)
+                w = max(w0, w1)
+                org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
+                org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
+                trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
+                self.__outImageRGB = cv2.addWeighted(org_image, 0.5, trans_image, 0.5, 0)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+
     # 缩放调节子窗口
     def __openZoomWindow(self):
         self.__openPropertyWindow('缩放', self.__changeZoom)
+
     # 缩放
     def __changeZoom(self, val):
         # 预处理接收到的信号
@@ -628,28 +651,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__propertyWindow.slider.setMinimum(-360)
             self.__propertyWindow.spinBox.setMaximum(360)
             self.__propertyWindow.spinBox.setMinimum(-360)
-    def __baocuncaijian(self,x,y,w,h):
-         img=self.__tempImageRGB.copy()
-         img=img[y:y+h, x:x+w]
-         self.__outImageRGB = img.copy()
-         self.__drawImage(self.outImageView, self.__outImageRGB)
-    #裁剪事件
+
+    def __baocuncaijian(self, x, y, w, h):
+        img = self.__tempImageRGB.copy()
+        img = img[y:y + h, x:x + w]
+        self.__outImageRGB = img.copy()
+        self.__drawImage(self.outImageView, self.__outImageRGB)
+
+    # 裁剪事件
     def __caijian(self):
         if self.__fileName:
-            crop=self.__tempImageRGB
+            crop = self.__tempImageRGB
             roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
             x, y, w, h = roi
             # print(roi)
             cv2.destroyAllWindows()
             # 显示ROI并保存图片
-            self.__baocuncaijian(x,y,w,h)
+            self.__baocuncaijian(x, y, w, h)
 
     # 旋转
     def __changeRotate(self, val):
         # 预处理接收到的信号
         __img = self.__dealSignal(val)
         # 如果修改了属性值
-        # None的size是1 ！！！   why？？？
+        # None的size是1 ！！！
         if numpy.size(__img) > 1:
             # 比例
             k = int(val)
@@ -710,9 +735,171 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.__outImageRGB = cv2.merge((rh, gh, bh))
             self.__drawImage(self.outImageView, self.__outImageRGB)
 
+    # -----------------------------------特征描述-----------------------------------
+    # 区域面积测量
+    def __quyumianji(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            area1 = cv2.contourArea(contours[0])
+            # print(int(area1)) contourArea测量相对较不精准，
+            area2 = stats[1][4]
+            if area2 <= 10:
+                QMessageBox.information(self, '面积', '目标识别错误')
+                return
+            QMessageBox.information(self, '面积', '目标的面积为%d(单位长度为一个像素点)' % area2)
+
+    def __quyuzhouchang(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            length = cv2.arcLength(contours[0], True)
+            if length<=10:
+                QMessageBox.information(self, '周长', '目标识别错误')
+                return
+            QMessageBox.information(self, '周长', '目标的周长为%d(单位长度为一个像素点)' % length)
+
+    def __quyujuxing(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            # 最小外接矩形
+            min_rect = cv2.minAreaRect(contours[0])  # 返回的是一个元组，第一个元素是左上角点坐标组成的元组，第二个元素是矩形宽高组成的元组，第三个是旋转的角度
+            box = cv2.boxPoints(min_rect)  # 返回的是一个numpy矩阵
+            min_rect_area = cv2.contourArea(box)
+            area2 = stats[1][4]
+            if min_rect_area <= 10:
+                QMessageBox.information(self, '最小外接矩形面积', '目标识别错误')
+                return
+            elif min_rect_area < area2:
+                min_rect_area = area2
+            QMessageBox.information(self, '最小外接矩形面积', '面积为%d(单位长度为一个像素点)' % min_rect_area)
+
+    def __quyujuxingdu(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            # 最小外接矩形
+            min_rect = cv2.minAreaRect(contours[0])  # 返回的是一个元组，第一个元素是左上角点坐标组成的元组，第二个元素是矩形宽高组成的元组，第三个是旋转的角度
+            box = cv2.boxPoints(min_rect)  # 返回的是一个numpy矩阵
+            min_rect_area = cv2.contourArea(box)
+            area2 = stats[1][4]
+            ee = area2 / (min_rect_area + 0.01)
+            if ee >= 1 and ee < 2:
+                QMessageBox.information(self, '矩形度', '该图形是矩形,矩形度为1')
+                return
+            elif ee >= 2:
+                QMessageBox.information(self, '矩形度', '目标识别错误')
+                return
+            QMessageBox.information(self, '矩形度', '矩形度为%.2f' % ee)
+
+    def __quyuxichangdu(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            # 最小外接矩形
+            min_rect = cv2.minAreaRect(contours[0])  # 返回的是一个元组，第一个元素是左上角点坐标组成的元组，第二个元素是矩形宽高组成的元组，第三个是旋转的角度
+            box = cv2.boxPoints(min_rect)  # 返回的是一个numpy矩阵
+            min_rect_h = min_rect[1][0]
+            min_rect_w = min_rect[1][1]
+            if min_rect_w<= 10:
+                QMessageBox.information(self, '区域细长度', '目标识别错误')
+                return
+            e = min_rect_h / min_rect_w
+            if e<=0 or e>1e8:
+                QMessageBox.information(self, '区域细长度', '目标识别错误')
+                return
+            QMessageBox.information(self, '区域细长度', '细长度为%.2f' % e)
+
+    def __quyuzhongxin(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            area2 = stats[1][4]
+            length = cv2.arcLength(contours[0], True)
+            if area2 <= 10 or length<=10:
+                QMessageBox.information(self, '重心', '目标识别错误')
+                return
+            centroid = centroids[0]
+            a = int(centroid[0])
+            b = int(centroid[1])
+            QMessageBox.information(self, '重心', '重心坐标为(%d,%d)'%(a,b))
+
     # -----------------------------------图像截取-----------------------------------
-    #迭代算法的实现函数
-    def Iterate_Thresh(self,img, initval, MaxIterTimes=20, thre=1):
+    # 迭代算法的实现函数
+    def Iterate_Thresh(self, img, initval, MaxIterTimes=20, thre=1):
         """ 阈值迭代算法
          Args:
           img: 灰度图像
@@ -731,10 +918,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if abs(T - initval) < thre or MaxIterTimes == 0:
             return T
         return self.Iterate_Thresh(img, T, MaxIterTimes - 1)
+
     def __diedai(self):
         if self.__fileName:
             if len(self.__outImageRGB.shape) == 3:
-                reply = QMessageBox.question(self, '确认完成迭代操作吗','提示：当前图片不是灰度图哦，迭代效果可能不好', QMessageBox.Yes, QMessageBox.No)
+                reply = QMessageBox.question(self, '确认完成迭代操作吗', '提示：当前图片不是灰度图哦，迭代效果可能不好', QMessageBox.Yes,
+                                             QMessageBox.No)
                 if reply == QMessageBox.No:
                     return
                 else:
@@ -742,7 +931,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     # 阈值迭代
                     thresh = self.Iterate_Thresh(self.__outImageRGB, initthre, 50)
                     dst = cv2.threshold(self.__outImageRGB, thresh, 255, cv2.THRESH_BINARY)[1]
-                    self.__outImageRGB=dst.copy()
+                    self.__outImageRGB = dst.copy()
                     self.__drawImage(self.outImageView, self.__outImageRGB)
             else:
                 initthre = numpy.mean(self.__outImageRGB)
@@ -751,8 +940,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 dst = cv2.threshold(self.__outImageRGB, thresh, 255, cv2.THRESH_BINARY)[1]
                 self.__outImageRGB = dst.copy()
                 self.__drawImage(self.outImageView, self.__outImageRGB)
-    #区域增长算法的实现函数
-    def regionGrow(self,gray, seeds,thresh,p):  # thresh表示与领域的相似距离，小于该距离就合并
+
+    # 区域增长算法的实现函数
+    def regionGrow(self, gray, seeds, thresh, p):  # thresh表示与领域的相似距离，小于该距离就合并
         seedMark = numpy.zeros(gray.shape)
         # 八邻域
         if p == 8:
@@ -784,18 +974,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         plt.imshow(im, cmap=plt.get_cmap("gray"))
         pos = plt.ginput(n)
         return pos  # 得到的pos是列表中包含多个坐标元组
+
     def get_color(self, n):  # path表示图片路径，n表示要获取的坐标个数
-        self.im =cv2.imread('11.jpg')
+        self.im = cv2.imread('11.jpg')
         plt.imshow(self.im)
         pos = plt.ginput(n)
         return pos  # 得到的pos是列表中包含多个坐标元组
+
     def __zhongzi(self):
         if self.__fileName:
-            w=PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数')
+            w = PySimpleGUI.popup_get_text('大于0的整数', title='选取种子的个数')
             if not w:
                 return
             i = int(w)
-            gray = cv2.cvtColor(self.__outImageRGB , cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2GRAY)
             seeds = self.get_x_y(n=i)  # 获取初始种子
             print("选取的初始点为：")
             new_seeds = []
@@ -813,7 +1005,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             cv2.waitKey(0)
             h = self.__outImageRGB.shape[0]
             w = self.__outImageRGB.shape[1]
-            #把灰白图中获取到的掩模信息保存到彩色图中，实现彩色图的掩模
+            # 把灰白图中获取到的掩模信息保存到彩色图中，实现彩色图的掩模
             for i in range(h):
                 for j in range(w):
                     if result[i][j] != 255:
@@ -821,11 +1013,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         self.__outImageRGB[i][j][1] = 0
                         self.__outImageRGB[i][j][2] = 0
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __renlianjiequ(self):
         if self.__fileName:
             try:
-                img=self.__outImageRGB.copy()
-                img=cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                img = self.__outImageRGB.copy()
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 # OpenCV人脸识别分类器
                 classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
                 if not classifier:
@@ -844,15 +1037,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         # 右眼
                         cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
                         # 嘴巴
-                        cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8),color)
-                self.__outImageRGB=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                        cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8), color)
+                self.__outImageRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 self.__drawImage(self.outImageView, self.__outImageRGB)
             except:
-                QMessageBox.information(self, '提示', '画面中人脸特征不够明显！')
+                QMessageBox.information(self, '提示', '画面中人脸特征不够明显！(或依赖未配置)')
+
     def __renlianjiequ2(self):
         if self.__fileName:
             try:
-                face_image=self.__outImageRGB.copy()
+                face_image = self.__outImageRGB.copy()
                 # STEP3: Get the face landmarks list
                 face_landmarks_list = face_recognition.face_landmarks(face_image)
                 # print the face landmarks list
@@ -880,7 +1074,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, '提示', '画面中人脸特征不够明显！')
 
     # -----------------------------------噪声-----------------------------------
-    #加高斯噪声
+    # 加高斯噪声
     def __addGasussNoise(self):
         if self.__fileName:
             # 图片灰度标准化
@@ -945,13 +1139,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         out[i][j] = self.__outImageRGB[i][j]
             self.__outImageRGB = out.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    #加泊松噪声
+
+    # 加泊松噪声
     def __addbosongNoise(self):
         if self.__fileName:
             # 搞一个与图片同规模的噪声数组
             noise_type = numpy.random.poisson(lam=0.55, size=self.__outImageRGB.shape).astype(
                 dtype='uint8')  # lam>=0 值越小，噪声频率就越少，size为图像尺寸
-            out = self.__outImageRGB+noise_type
+            out = self.__outImageRGB + noise_type
             self.__outImageRGB = out.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
 
@@ -969,11 +1164,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.medianBlur(self.__outImageRGB, 5)
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    #自实现中值滤波
+
+    # 自实现中值滤波
     def __zishixianmedianValueFilter(self):
         if self.__fileName:
-            imarray =self.__outImageRGB
-            k=3    #3*3的区域
+            imarray = self.__outImageRGB
+            k = 3  # 3*3的区域
             height = imarray.shape[0]
             width = imarray.shape[1]
             edge = int((k - 1) / 2)
@@ -982,13 +1178,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 for j in range(edge, width - edge):
                     new_arr[i, j] = numpy.median(
                         imarray[i - edge:i + edge + 1, j - edge:j + edge + 1])  # 调用np.median求取中值
-            self.__outImageRGB=new_arr
+            self.__outImageRGB = new_arr
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    #高斯滤波
+
+    # 高斯滤波
     def __guasslvbo(self):
         if self.__fileName:
             self.__outImageRGB = cv2.GaussianBlur(self.__outImageRGB, (5, 5), 0)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     # Sobel算子锐化
     def __sobel(self):
         if self.__fileName:
@@ -1015,23 +1213,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 直接调库
             self.__outImageRGB = cv2.Laplacian(self.__outImageRGB, -1, ksize=3)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __CannyAction(self):
         if self.__fileName:
             # 直接调库
             w = PySimpleGUI.popup_get_text('大于0，小于255的整数', title='请输入Canny算子的阈值下限')
             if not w:
                 return
-            #最小阈值越大，介于两阈值之间但靠近边界的许多点被舍弃，会造成边缘的破损，细节相对减少
-            wmin=int(w)
-            #最大阈值越大，直接舍弃掉的点越多，这些舍弃是大面积的，同样使细节减少，突出更明显的边缘
+            # 最小阈值越大，介于两阈值之间但靠近边界的许多点被舍弃，会造成边缘的破损，细节相对减少
+            wmin = int(w)
+            # 最大阈值越大，直接舍弃掉的点越多，这些舍弃是大面积的，同样使细节减少，突出更明显的边缘
             w = PySimpleGUI.popup_get_text('大于最小阈值，小于255的整数', title='请输入Canny算子的阈值上限')
             if not w:
                 return
-            wmax=int(w)
-            self.__outImageRGB =cv2.Canny(self.__outImageRGB, wmin, wmax)
+            wmax = int(w)
+            self.__outImageRGB = cv2.Canny(self.__outImageRGB, wmin, wmax)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     # -----------------------------------美化效果-----------------------------------
-    #浮雕
+    # 浮雕
     def __fudiao(self):
         if self.__fileName:
             def Filter_Fudiao(src_img):
@@ -1052,11 +1252,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         new_img[i, j] = new_value
                 return new_img
 
-            gray_img = cv2.cvtColor(self.__outImageRGB , cv2.COLOR_BGR2GRAY)
+            gray_img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2GRAY)
             new_img = Filter_Fudiao(gray_img)
             self.__outImageRGB = new_img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    #毛玻璃
+
+    # 毛玻璃
     def __maoboli(self):
         if self.__fileName:
             dst = numpy.zeros_like(self.__outImageRGB)
@@ -1072,6 +1273,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     dst[y, x] = self.__outImageRGB[y + random_num, x + random_num]
             self.__outImageRGB = dst.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __katonghua(self):
         if self.__fileName:
             def edge_mask(img, line_size, blur_value):
@@ -1094,6 +1296,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 result = center[label.flatten()]
                 result = result.reshape(img.shape)
                 return result
+
             line_size = 7
             blur_value = 7
             edges = edge_mask(self.__outImageRGB, line_size, blur_value)
@@ -1102,21 +1305,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             blurred = cv2.bilateralFilter(img, d=7,
                                           sigmaColor=200, sigmaSpace=200)
             cartoon = cv2.bitwise_and(blurred, blurred, mask=edges)
-            self.__outImageRGB=cartoon.copy()
+            self.__outImageRGB = cartoon.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __masaike(self):
         if self.__fileName:
-            crop=self.__outImageRGB.copy()
+            crop = self.__outImageRGB.copy()
             crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
             roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
             x, y, w, h = roi
             cv2.destroyAllWindows()
-            img=self.__outImageRGB.copy()
+            img = self.__outImageRGB.copy()
             # img1 = img[y:y+h, x:x+w]
             # height, width = img1.shape[0:2]
-            #遍历每一个像素点
-            for row in range(x,x+w):
-                for col in range(y,y+h):
+            # 遍历每一个像素点
+            for row in range(x, x + w):
+                for col in range(y, y + h):
                     # 如果正好为10的倍数的行并且是10的倍数的列
                     if row % 10 == 0 and col % 10 == 0:
                         # 获取到这个像素点的bgr三原色
@@ -1124,23 +1328,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         # 遍历这个像素点旁边的100个像素点 都等于中间这个像素点
                         for i in range(10):
                             for j in range(10):
-                                img[col + j,row + i] = b, g, r
-            self.__outImageRGB=img.copy()
+                                img[col + j, row + i] = b, g, r
+            self.__outImageRGB = img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
-    #加框
+
+    # 加框
     def __jiakuang(self):
-        color0=[255,0,0]
+        color0 = [255, 0, 0]
         if self.__fileName:
-            pos=self.get_color(1)
-            i=int(pos[0][0])
-            j=int(pos[0][1])
-            color0=self.im[j][i]
-            img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()), int(str(color0[2]).strip())])
-            self.__outImageRGB=img.copy()
+            pos = self.get_color(1)
+            i = int(pos[0][0])
+            j = int(pos[0][1])
+            color0 = self.im[j][i]
+            img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT,
+                                     value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()),
+                                            int(str(color0[2]).strip())])
+            self.__outImageRGB = img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __ronghekuang(self):
         if self.__fileName:
-            ak1=self.__outImageRGB.copy()
+            ak1 = self.__outImageRGB.copy()
             ak2 = self.__outImageRGB.copy()
             h, w, s = ak1.shape
             __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
@@ -1150,7 +1358,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.__fileName = __fileName
                 # 读入，记得转换颜色空间！！！
                 __bgrImg = cv2.imread(self.__fileName)
-                ak2= cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
+                ak2 = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
             else:
                 return
             ak2 = cv2.resize(ak2, (w, h), interpolation=cv2.INTER_LINEAR)
@@ -1172,8 +1380,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         ak2[i][j][0] = ak1[i][j][0]
                         ak2[i][j][1] = ak1[i][j][1]
                         ak2[i][j][2] = ak1[i][j][2]
-            self.__outImageRGB=ak2.copy()
+            self.__outImageRGB = ak2.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __pingtu(self):
         if self.__fileName:
             # 打开文件选择窗口
@@ -1184,9 +1393,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.__fileName = __fileName
                 # 读入，记得转换颜色空间！！！
                 __bgrImg = cv2.imread(self.__fileName)
-                __bgrImg= cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
+                __bgrImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                 h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
-                h1, w1 = __bgrImg.shape[0],__bgrImg.shape[1]
+                h1, w1 = __bgrImg.shape[0], __bgrImg.shape[1]
                 h = max(h0, h1)
                 w = max(w0, w1)
                 org_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
@@ -1197,23 +1406,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 w = PySimpleGUI.popup_get_text('垂直或水平拼接', title='输入拼接方式')
                 if not w:
                     return
-                if w=='垂直':
-                    img = numpy.concatenate((org_image,trans_image),0)
+                if w == '垂直':
+                    img = numpy.concatenate((org_image, trans_image), 0)
                 elif w == '水平':
                     img = numpy.concatenate((org_image, trans_image), 1)
                 else:
                     return
-                self.__outImageRGB=img.copy()
+                self.__outImageRGB = img.copy()
                 self.__drawImage(self.outImageView, self.__outImageRGB)
 
     # -----------------------------------相片滤镜-----------------------------------
-    #怀旧
+    # 怀旧
     def __huaijiu(self):
         if self.__fileName:
-            img=self.__outImageRGB.copy()
+            img = self.__outImageRGB.copy()
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             height, width, n = img.shape
-            img2=img.copy()
+            img2 = img.copy()
             for i in range(height):
                 for j in range(width):
                     b = img[i, j][0]
@@ -1226,13 +1435,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     img2[i, j][0] = max(0, min(B, 255))
                     img2[i, j][1] = max(0, min(G, 255))
                     img2[i, j][2] = max(0, min(R, 255))
-            # 显示图像
-                self.__outImageRGB= cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+                # 显示图像
+                self.__outImageRGB = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
                 self.__drawImage(self.outImageView, self.__outImageRGB)
-    #光晕
+
+    # 光晕
     def __guangyun(self):
         if self.__fileName:
-            img=self.__outImageRGB.copy()
+            img = self.__outImageRGB.copy()
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             rows, cols = img.shape[:2]
             centerX = rows / 2 - 20
@@ -1242,19 +1452,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dst = numpy.zeros((rows, cols, 3), dtype="uint8")
             for i in range(rows):
                 for j in range(cols):
-            # 计算当前点到光照中心距离(平面坐标系中两点之间的距离)
+                    # 计算当前点到光照中心距离(平面坐标系中两点之间的距离)
                     distance = math.pow((centerY - j), 2) + math.pow((centerX - i), 2)
-            # 获取原始图像
+                    # 获取原始图像
                     B = img[i, j][0]
                     G = img[i, j][1]
                     R = img[i, j][2]
                     if (distance < radius * radius):
-            # 按照距离大小计算增强的光照值
+                        # 按照距离大小计算增强的光照值
                         result = (int)(strength * (1.0 - math.sqrt(distance) / radius))
                         B = img[i, j][0] + result
                         G = img[i, j][1] + result
                         R = img[i, j][2] + result
-            # 判断边界 防止越界
+                        # 判断边界 防止越界
                         B = min(255, max(0, B))
                         G = min(255, max(0, G))
                         R = min(255, max(0, R))
@@ -1262,12 +1472,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     else:
                         dst[i, j] = numpy.uint8((B, G, R))
             # 显示图像
-            self.__outImageRGB= cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+            self.__outImageRGB = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     # 流年
     def __liunian(self):
         if self.__fileName:
-            img=self.__outImageRGB.copy()
+            img = self.__outImageRGB.copy()
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             rows, cols = img.shape[:2]
             dst = numpy.zeros((rows, cols, 3), dtype="uint8")
@@ -1280,8 +1491,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         B = 255
                     dst[i, j] = numpy.uint8((B, G, R))
             # 显示图像
-            self.__outImageRGB= cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+            self.__outImageRGB = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+
     def __renlianmakeup(self):
         if self.__fileName:
             try:
@@ -1312,7 +1524,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     draw_landmark_for_makeup.polygon(face_landmarks['left_eye'], fill=(0, 255, 0, 0))
                     draw_landmark_for_makeup.polygon(face_landmarks['right_eye'], fill=(0, 255, 0, 0))
                     # Eyeliner to left and right eyes as lines
-                    draw_landmark_for_makeup.line(face_landmarks['left_eye'] + [face_landmarks['left_eye'][0]],                                                  fill=(0, 0, 0, 90), width=6)
+                    draw_landmark_for_makeup.line(face_landmarks['left_eye'] + [face_landmarks['left_eye'][0]],
+                                                  fill=(0, 0, 0, 90), width=6)
                     draw_landmark_for_makeup.line(face_landmarks['right_eye'] + [face_landmarks['right_eye'][0]],
                                                   fill=(0, 0, 0, 90), width=6)
                 # 显示图像
