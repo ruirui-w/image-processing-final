@@ -163,9 +163,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.quyuzhankongbiAction.triggered.connect(self.__quyujuxingdu)
         # 细长度
         self.quyuxichangduAction.triggered.connect(self.__quyuxichangdu)
+        #圆形度
+        self.quyuyuanxingduAction.triggered.connect(self.__quyuyuanxingdu)
         # 重心
         self.quyuzhongxinAction.triggered.connect(self.__quyuzhongxin)
-
+        #Harris角
+        self.quyuHarrisAction.triggered.connect(self.__quyuHarris)
+        self.quyusubHarrisAction.triggered.connect(self.__quyusubHarris)
+        # 轮廓识别
+        self.quyulunkunshibieAction.triggered.connect(self.__quyulunkuoshibie)
         # 图像截取菜单
         # 裁剪
         self.caijianAction.triggered.connect(self.__caijian)
@@ -750,17 +756,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
             else:
                 img = self.__outImageRGB.copy()
-            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
-            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
-            area1 = cv2.contourArea(contours[0])
-            # print(int(area1)) contourArea测量相对较不精准，
-            area2 = stats[1][4]
-            if area2 <= 10:
+            try:
+                ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+                contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+                area1 = cv2.contourArea(contours[0])
+                # print(int(area1)) contourArea测量相对较不精准，
+                area2 = stats[1][4]
+                if area2 <= 10:
+                    QMessageBox.information(self, '面积', '目标识别错误')
+                    return
+                QMessageBox.information(self, '面积', '目标的面积为%d(单位长度为一个像素点)' % area2)
+            except:
                 QMessageBox.information(self, '面积', '目标识别错误')
                 return
-            QMessageBox.information(self, '面积', '目标的面积为%d(单位长度为一个像素点)' % area2)
-
+    #区域周长测量
     def __quyuzhouchang(self):
         if self.__fileName:
             if self.tezhengflag == 0:
@@ -782,7 +792,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, '周长', '目标识别错误')
                 return
             QMessageBox.information(self, '周长', '目标的周长为%d(单位长度为一个像素点)' % length)
+    #区域圆形度测量
+    def __quyuyuanxingdu(self):
+        if self.__fileName:
+            if self.tezhengflag == 0:
+                reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    self.tezhengflag = 1
+                    return
+            self.tezhengflag = 1
+            if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                img = self.__outImageRGB.copy()
+            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+            length = cv2.arcLength(contours[0], True)
+            area= stats[1][4]
+            yuanxingdu = (4 * math.pi * area) / (length * length)
+            if length<=10 or area<=10 or yuanxingdu>2:
+                 QMessageBox.information(self, '圆形度', '目标识别错误')
+                 return
+            if yuanxingdu>=0.99:
+                QMessageBox.information(self, '圆形度', '目标是圆形，圆形度为1')
+                return
+            QMessageBox.information(self, '圆形度', '目标的圆形度为%.2f'%yuanxingdu)
 
+    #区域矩形面积测量
     def __quyujuxing(self):
         if self.__fileName:
             if self.tezhengflag == 0:
@@ -810,7 +848,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             elif min_rect_area < area2:
                 min_rect_area = area2
             QMessageBox.information(self, '最小外接矩形面积', '面积为%d(单位长度为一个像素点)' % min_rect_area)
-
+    #区域细长度测量
     def __quyujuxingdu(self):
         if self.__fileName:
             if self.tezhengflag == 0:
@@ -884,19 +922,93 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
             else:
                 img = self.__outImageRGB.copy()
-            ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
-            contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
-            area2 = stats[1][4]
-            length = cv2.arcLength(contours[0], True)
-            if area2 <= 10 or length<=10:
-                QMessageBox.information(self, '重心', '目标识别错误')
-                return
-            centroid = centroids[0]
-            a = int(centroid[0])
-            b = int(centroid[1])
-            QMessageBox.information(self, '重心', '重心坐标为(%d,%d)'%(a,b))
+            try:
+                ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+                contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+                area2 = stats[1][4]
+                length = cv2.arcLength(contours[0], True)
+                if area2 <= 10 or length<=10:
+                    QMessageBox.information(self, '重心', '目标识别错误')
+                    return
+                centroid = centroids[0]
+                a = int(centroid[0])
+                b = int(centroid[1])
+                QMessageBox.information(self, '重心', '重心坐标为(%d,%d)'%(a,b))
+            except:
+                QMessageBox.information(self, '重心', '区域识别错误')
+    #Harris角(角点检测)
+    def __quyuHarris(self):
+        if self.__fileName:
+            gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            gray = numpy.float32(gray)
+            # 输入图像必须是float32，最后一个参数在0.04到0.05
+            dst = cv2.cornerHarris(gray, 2, 3, 0.04)
+            dst = cv2.dilate(dst, None)
+            # Threshold for an optimal value, it may vary depending on the image.
+            img=self.__outImageRGB.copy()
+            img[dst > 0.01 * dst.max()] = [255, 0, 0]
+            self.__outImageRGB=img.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __quyusubHarris(self):
+        if self.__fileName:
+            img = self.__outImageRGB.copy()
+            gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            gray = numpy.float32(gray)
+            # 输入图像必须是float32，最后一个参数在0.04到0.05
+            dst = cv2.cornerHarris(gray, 2, 3, 0.04)
+            dst = cv2.dilate(dst, None)
+            ret, dst = cv2.threshold(dst, 0.01 * dst.max(), 255, 0)
+            dst = numpy.uint8(dst)
+            # find centroids
+            ret, labels, stats, centroids = cv2.connectedComponentsWithStats(dst)
+            # define the criteria to stop and refine the corners
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+            corners = cv2.cornerSubPix(gray, numpy.float32(centroids), (5, 5), (-1, -1), criteria)
+            # Now draw them
+            res = numpy.hstack((centroids, corners))
+            res = numpy.int0(res)
+            img[res[:, 1], res[:, 0]] = [0, 0, 255]
+            img[res[:, 3], res[:, 2]] = [0, 255, 0]
+            self.__outImageRGB=img.copy()
+            self.__drawImage(self.outImageView, self.__outImageRGB)
 
+    #轮廓识别
+    def __quyulunkuoshibie(self):
+        self.shapes = {'triangle': 0, 'rectangle': 0, 'polygons': 0,'multiples':0,'circles': 0}
+        if self.__fileName:
+            QMessageBox.information(self,'提示（此模块还不完善）', '请提供轮廓清晰的图片')
+            if len(self.__outImageRGB.shape) > 2:
+                # 灰度化使得三通道RGB图变成单通道灰度图
+                gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+            else:
+                gray= self.__outImageRGB.copy()
+            try:
+                h, w, ch = self.__outImageRGB.shape
+                ret, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+                contours, layer_num= cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                g=gray
+                for i in range(len(contours)-1):
+                    ep = 0.01 * cv2.arcLength(contours[i], True)
+                    ap = cv2.approxPolyDP(contours[i], ep, True)
+                    co = len(ap)
+                    if co == 3:
+                        st = '三⾓形'
+                        self.shapes['triangle']+=1
+                    elif co == 4:
+                        st = '矩形'
+                        self.shapes['rectangle'] += 1
+                    elif co == 10:
+                        st = '五⾓星'
+                        self.shapes['polygons'] += 1
+                    else:
+                        st = '其他'
+                        self.shapes['circles'] += 1
+                QMessageBox.information(self, '轮廓识别', '识别结果为:三角形有%d个，\
+                \n矩形有%d个，\n五角星有%d个，\n圆有%d个'%(self.shapes['triangle'],self.shapes['rectangle'],self.shapes['polygons'],self.shapes['circles']))
+            except:
+                QMessageBox.information(self, '轮廓识别', '目标识别错误')
+                return
     # -----------------------------------图像截取-----------------------------------
     # 迭代算法的实现函数
     def Iterate_Thresh(self, img, initval, MaxIterTimes=20, thre=1):
@@ -989,7 +1101,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             i = int(w)
             gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2GRAY)
             seeds = self.get_x_y(n=i)  # 获取初始种子
-            print("选取的初始点为：")
+            #print("选取的初始点为：")
             new_seeds = []
             for seed in seeds:
                 print(seed)
@@ -1336,15 +1448,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __jiakuang(self):
         color0 = [255, 0, 0]
         if self.__fileName:
-            pos = self.get_color(1)
-            i = int(pos[0][0])
-            j = int(pos[0][1])
-            color0 = self.im[j][i]
-            img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT,
-                                     value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()),
-                                            int(str(color0[2]).strip())])
-            self.__outImageRGB = img.copy()
-            self.__drawImage(self.outImageView, self.__outImageRGB)
+            try:
+                pos = self.get_color(1)
+                i = int(pos[0][0])
+                j = int(pos[0][1])
+                color0 = self.im[j][i]
+                img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT,
+                                         value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()),
+                                                int(str(color0[2]).strip())])
+                self.__outImageRGB = img.copy()
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                return
 
     def __ronghekuang(self):
         if self.__fileName:
@@ -1498,7 +1613,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.__fileName:
             try:
                 face_image = self.__outImageRGB.copy()
-                # STEP3: Get the face landmarks list
                 face_landmarks_list = face_recognition.face_landmarks(face_image)
                 # print the face landmarks list
                 # STEP4: Loop around to convert to draw objects

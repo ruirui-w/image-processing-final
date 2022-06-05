@@ -96,6 +96,9 @@ class Ui_MainWindow(object):
         #特征描述菜单
         self.tezhengMenu = QtWidgets.QMenu(self.menubar)
         self.tezhengMenu.setObjectName("tezhengMenu")
+        #Harris菜单
+        self.HarrisMenu = QtWidgets.QMenu(self.tezhengMenu)
+        self.HarrisMenu.setObjectName("HarrisMenu")
 #####  以上是对菜单及子菜单的管理，让菜单管理与act实现管理分开，方便修改
 
 #####  定义操作，此时还未与按钮联系
@@ -242,6 +245,17 @@ class Ui_MainWindow(object):
         #重心
         self.quyuzhongxinAction = QtWidgets.QAction(MainWindow)
         self.quyuzhongxinAction.setObjectName("quyuzhongxinAction")
+        #Harris角
+        self.quyuHarrisAction = QtWidgets.QAction(MainWindow)
+        self.quyuHarrisAction.setObjectName("quyuHarrisAction")
+        self.quyusubHarrisAction = QtWidgets.QAction(MainWindow)
+        self.quyusubHarrisAction.setObjectName("quyusubHarrisAction")
+        #圆形度
+        self.quyuyuanxingduAction = QtWidgets.QAction(MainWindow)
+        self.quyuyuanxingduAction.setObjectName("quyuyuanxingduAction")
+        #轮廓识别
+        self.quyulunkunshibieAction = QtWidgets.QAction(MainWindow)
+        self.quyulunkunshibieAction.setObjectName("quyulunkunshibieAction")
         #添加图标标识
         self.openFileAction.setIcon(style.standardIcon(QStyle.SP_DialogOpenButton))
         self.saveFileAction.setIcon(style.standardIcon(QStyle.SP_DialogSaveButton))
@@ -304,8 +318,17 @@ class Ui_MainWindow(object):
         self.tezhengMenu.addAction(self.quyuzhankongbiAction)
         #细长度
         self.tezhengMenu.addAction(self.quyuxichangduAction)
+        #圆形度
+        self.tezhengMenu.addAction(self.quyuyuanxingduAction)
         #重心
         self.tezhengMenu.addAction(self.quyuzhongxinAction)
+        #Harris角
+        self.tezhengMenu.addAction(self.HarrisMenu.menuAction())
+        self.HarrisMenu.addAction(self.quyuHarrisAction)
+        self.HarrisMenu.addAction(self.quyusubHarrisAction)
+
+        #轮廓识别
+        self.tezhengMenu.addAction(self.quyulunkunshibieAction)
 
         self.noiseMenu.addAction(self.addGaussianNoiseAction)
         self.noiseMenu.addAction(self.addUiformNoiseAction)
@@ -368,6 +391,7 @@ class Ui_MainWindow(object):
         self.filterMenu.setTitle(_translate("MainWindow", "空域滤波"))
         self.middleMenu.setTitle(_translate("MainWindow", "中值滤波"))
         self.smoothMenu.setTitle(_translate("MainWindow", "平滑滤波"))
+        self.HarrisMenu.setTitle(_translate("MainWindow", "Harris角"))
         self.fusionMenu.setTitle(_translate("MainWindow", "融合"))
         self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波"))
         self.jiequMenu.setTitle(_translate("MainWindow", "图像截取"))
@@ -390,7 +414,7 @@ class Ui_MainWindow(object):
         self.imageMultiplyAction.setText(_translate("MainWindow", "乘"))
         self.imagefusionAction.setText(_translate("MainWindow", "1:1融合"))
         self.imagefusionzixuanAction.setText(_translate("MainWindow", "自定义融合"))
-        self.histogramAction.setText(_translate("MainWindow", "归一化直方图"))
+        self.histogramAction.setText(_translate("MainWindow", "图像直方图"))
         self.histogramEqAction.setText(_translate("MainWindow", "直方图均衡化"))
         self.lightAction.setText(_translate("MainWindow", "亮度"))
         self.contrastAction.setText(_translate("MainWindow", "对比度"))
@@ -437,3 +461,7 @@ class Ui_MainWindow(object):
         self.quyuzhankongbiAction.setText(_translate("MainWindow", "矩形度"))
         self.quyuxichangduAction.setText(_translate("MainWindow", "细长度"))
         self.quyuzhongxinAction.setText(_translate("MainWindow", "重心"))
+        self.quyuHarrisAction.setText(_translate("MainWindow", "Harris角"))
+        self.quyusubHarrisAction.setText(_translate("MainWindow", "迭代高精度Harris角"))
+        self.quyuyuanxingduAction.setText(_translate("MainWindow", "圆形度"))
+        self.quyulunkunshibieAction.setText(_translate("MainWindow", "轮廓识别"))
