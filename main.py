@@ -2,7 +2,8 @@ import math
 import os
 import random
 import sys
-from PIL import Image, ImageOps
+
+from PIL import Image, ImageOps, ImageDraw
 import cv2
 import numpy
 from PyQt5 import QtGui, QtCore
@@ -13,7 +14,8 @@ from matplotlib import pyplot as plt
 
 from mainWindow import Ui_MainWindow
 from propertyWindow import Ui_Form
-
+import face_recognition
+from PIL import Image, ImageDraw
 
 # 预处理窗口类
 # 就是弹出来的调整各种属性值的小窗口
@@ -154,8 +156,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.diedaiAction.triggered.connect(self.__diedai)
         #种子填充
         self.zhongziAction.triggered.connect(self.__zhongzi)
-        #人脸截取
+        #人脸框取
         self.renlianAction.triggered.connect(self.__renlianjiequ)
+        #人脸轮廓(单张脸)
+        self.renlianjiequAction.triggered.connect(self.__renlianjiequ2)
         # 噪声菜单
         # 加高斯噪声
         self.addGaussianNoiseAction.triggered.connect(self.__addGasussNoise)
@@ -181,6 +185,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.prewittAction.triggered.connect(self.__prewitt)
         # 拉普拉斯算子锐化
         self.laplacianAction.triggered.connect(self.__laplacian)
+        # Canny算子锐化
+        self.CannyAction.triggered.connect(self.__CannyAction)
         #图片美化效果菜单
         #浮雕效果
         self.fudiaoAction.triggered.connect(self.__fudiao)
@@ -204,6 +210,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.guangyunAction.triggered.connect(self.__guangyun)
         #流年
         self.liunianAction.triggered.connect(self.__liunian)
+        #人脸一键美化
+        self.renlianmakeupAction.triggered.connect(self.__renlianmakeup)
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
@@ -814,26 +822,63 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         self.__outImageRGB[i][j][2] = 0
             self.__drawImage(self.outImageView, self.__outImageRGB)
     def __renlianjiequ(self):
-        img=self.__outImageRGB.copy()
-        img=cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        # OpenCV人脸识别分类器
-        classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-        color = (0, 255, 0)  # 定义绘制颜色
-        # 调用识别人脸
-        faceRects = classifier.detectMultiScale(img, scaleFactor=1.2, minNeighbors=3, minSize=(32, 32))
-        if len(faceRects):  # 大于0则检测到人脸
-            for faceRect in faceRects:  # 单独框出每一张人脸
-                x, y, w, h = faceRect
-                # 框出人脸
-                cv2.rectangle(img, (x, y), (x + h, y + w), color, 2)
-                # 左眼
-                cv2.circle(img, (x + w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
-                # 右眼
-                cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
-                # 嘴巴
-                cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8),color)
-        self.__outImageRGB=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        self.__drawImage(self.outImageView, self.__outImageRGB)
+        if self.__fileName:
+            try:
+                img=self.__outImageRGB.copy()
+                img=cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                # OpenCV人脸识别分类器
+                classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+                if not classifier:
+                    QMessageBox.information(self, '提示', '依赖未配置，本功能暂时不可用')
+                    return
+                color = (0, 255, 0)  # 定义绘制颜色
+                # 调用识别人脸
+                faceRects = classifier.detectMultiScale(img, scaleFactor=1.2, minNeighbors=3, minSize=(32, 32))
+                if len(faceRects):  # 大于0则检测到人脸
+                    for faceRect in faceRects:  # 单独框出每一张人脸
+                        x, y, w, h = faceRect
+                        # 框出人脸
+                        cv2.rectangle(img, (x, y), (x + h, y + w), color, 2)
+                        # 左眼
+                        cv2.circle(img, (x + w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                        # 右眼
+                        cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                        # 嘴巴
+                        cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8),color)
+                self.__outImageRGB=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                QMessageBox.information(self, '提示', '画面中人脸特征不够明显！')
+    def __renlianjiequ2(self):
+        if self.__fileName:
+            try:
+                face_image=self.__outImageRGB.copy()
+                # STEP3: Get the face landmarks list
+                face_landmarks_list = face_recognition.face_landmarks(face_image)
+                # print the face landmarks list
+                # print(face_landmarks_list)
+                # STEP4: Loop around to convert to draw objects
+                for face_landmarks in face_landmarks_list:
+                    # convert the numpy array image into pil image object
+                    pil_image = Image.fromarray(face_image)
+                    # convert the pil image to draw object
+                    draw_face_landmark = ImageDraw.Draw(pil_image)
+                    # join each face landmark points
+                    draw_face_landmark.line(face_landmarks['chin'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['left_eyebrow'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['right_eyebrow'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['nose_bridge'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['nose_tip'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['left_eye'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['right_eye'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['top_lip'], fill=(255, 255, 255), width=2)
+                    draw_face_landmark.line(face_landmarks['bottom_lip'], fill=(255, 255, 255), width=2)
+                img = cv2.cvtColor(numpy.asarray(pil_image), cv2.COLOR_RGB2BGR)
+                self.__outImageRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                QMessageBox.information(self, '提示', '画面中人脸特征不够明显！')
+
     # -----------------------------------噪声-----------------------------------
     #加高斯噪声
     def __addGasussNoise(self):
@@ -969,6 +1014,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.__fileName:
             # 直接调库
             self.__outImageRGB = cv2.Laplacian(self.__outImageRGB, -1, ksize=3)
+            self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __CannyAction(self):
+        if self.__fileName:
+            # 直接调库
+            w = PySimpleGUI.popup_get_text('大于0，小于255的整数', title='请输入Canny算子的阈值下限')
+            if not w:
+                return
+            #最小阈值越大，介于两阈值之间但靠近边界的许多点被舍弃，会造成边缘的破损，细节相对减少
+            wmin=int(w)
+            #最大阈值越大，直接舍弃掉的点越多，这些舍弃是大面积的，同样使细节减少，突出更明显的边缘
+            w = PySimpleGUI.popup_get_text('大于最小阈值，小于255的整数', title='请输入Canny算子的阈值上限')
+            if not w:
+                return
+            wmax=int(w)
+            self.__outImageRGB =cv2.Canny(self.__outImageRGB, wmin, wmax)
             self.__drawImage(self.outImageView, self.__outImageRGB)
     # -----------------------------------美化效果-----------------------------------
     #浮雕
@@ -1222,6 +1282,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 显示图像
             self.__outImageRGB= cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
             self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __renlianmakeup(self):
+        if self.__fileName:
+            try:
+                face_image = self.__outImageRGB.copy()
+                # STEP3: Get the face landmarks list
+                face_landmarks_list = face_recognition.face_landmarks(face_image)
+                # print the face landmarks list
+                # STEP4: Loop around to convert to draw objects
+                for face_landmarks in face_landmarks_list:
+                    # convert the numpy array image into pil image object
+                    pil_image = Image.fromarray(face_image)
+                    # convert the pil image to draw object
+                    draw_landmark_for_makeup = ImageDraw.Draw(pil_image, "RGBA")
+                    # draw the shapes and fill with color
+                    # Make left, right eyebrows darker
+                    # Polygon on top and line on bottom with dark color
+                    draw_landmark_for_makeup.polygon(face_landmarks['left_eyebrow'], fill=(68, 54, 39, 128))
+                    draw_landmark_for_makeup.polygon(face_landmarks['right_eyebrow'], fill=(68, 54, 39, 128))
+                    draw_landmark_for_makeup.line(face_landmarks['left_eyebrow'], fill=(68, 54, 39, 150), width=5)
+                    draw_landmark_for_makeup.line(face_landmarks['right_eyebrow'], fill=(68, 54, 39, 150), width=5)
+                    # Add lipstick to top and bottom lips
+                    # using red polygons and lines filled with red
+                    draw_landmark_for_makeup.polygon(face_landmarks['top_lip'], fill=(150, 0, 0, 128))
+                    draw_landmark_for_makeup.polygon(face_landmarks['bottom_lip'], fill=(150, 0, 0, 128))
+                    draw_landmark_for_makeup.line(face_landmarks['top_lip'], fill=(150, 0, 0, 64), width=8)
+                    draw_landmark_for_makeup.line(face_landmarks['bottom_lip'], fill=(150, 0, 0, 64), width=8)
+                    # Make left and right eyes filled with Green
+                    draw_landmark_for_makeup.polygon(face_landmarks['left_eye'], fill=(0, 255, 0, 0))
+                    draw_landmark_for_makeup.polygon(face_landmarks['right_eye'], fill=(0, 255, 0, 0))
+                    # Eyeliner to left and right eyes as lines
+                    draw_landmark_for_makeup.line(face_landmarks['left_eye'] + [face_landmarks['left_eye'][0]],                                                  fill=(0, 0, 0, 90), width=6)
+                    draw_landmark_for_makeup.line(face_landmarks['right_eye'] + [face_landmarks['right_eye'][0]],
+                                                  fill=(0, 0, 0, 90), width=6)
+                # 显示图像
+                img = cv2.cvtColor(numpy.asarray(pil_image), cv2.COLOR_RGB2BGR)
+                self.__outImageRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                QMessageBox.information(self, '提示', '画面中人脸特征不够明显！')
+
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):
