@@ -253,6 +253,9 @@ class Ui_MainWindow(object):
         #圆形度
         self.quyuyuanxingduAction = QtWidgets.QAction(MainWindow)
         self.quyuyuanxingduAction.setObjectName("quyuyuanxingduAction")
+        #圆形检测
+        self.quyujianceyuanAction = QtWidgets.QAction(MainWindow)
+        self.quyujianceyuanAction.setObjectName("quyujianceyuanAction")
         #轮廓识别
         self.quyulunkunshibieAction = QtWidgets.QAction(MainWindow)
         self.quyulunkunshibieAction.setObjectName("quyulunkunshibieAction")
@@ -326,7 +329,8 @@ class Ui_MainWindow(object):
         self.tezhengMenu.addAction(self.HarrisMenu.menuAction())
         self.HarrisMenu.addAction(self.quyuHarrisAction)
         self.HarrisMenu.addAction(self.quyusubHarrisAction)
-
+        #检测圆
+        self.tezhengMenu.addAction(self.quyujianceyuanAction)
         #轮廓识别
         self.tezhengMenu.addAction(self.quyulunkunshibieAction)
 
@@ -464,4 +468,5 @@ class Ui_MainWindow(object):
         self.quyuHarrisAction.setText(_translate("MainWindow", "Harris角"))
         self.quyusubHarrisAction.setText(_translate("MainWindow", "迭代高精度Harris角"))
         self.quyuyuanxingduAction.setText(_translate("MainWindow", "圆形度"))
+        self.quyujianceyuanAction.setText(_translate("MainWindow", "检测圆形"))
         self.quyulunkunshibieAction.setText(_translate("MainWindow", "轮廓识别"))

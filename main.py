@@ -163,13 +163,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.quyuzhankongbiAction.triggered.connect(self.__quyujuxingdu)
         # 细长度
         self.quyuxichangduAction.triggered.connect(self.__quyuxichangdu)
-        #圆形度
+        # 圆形度
         self.quyuyuanxingduAction.triggered.connect(self.__quyuyuanxingdu)
         # 重心
         self.quyuzhongxinAction.triggered.connect(self.__quyuzhongxin)
         #Harris角
         self.quyuHarrisAction.triggered.connect(self.__quyuHarris)
         self.quyusubHarrisAction.triggered.connect(self.__quyusubHarris)
+        #检测圆
+        self.quyujianceyuanAction.triggered.connect(self.__quyujianceyuan)
         # 轮廓识别
         self.quyulunkunshibieAction.triggered.connect(self.__quyulunkuoshibie)
         # 图像截取菜单
@@ -286,11 +288,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 执行保存图片文件的操作
     def __saveImg(self, fileName):
         # 已经打开了文件才能保存
-        if fileName:
+        if self.__fileName:
             # RGB转BRG空间后才能通过opencv正确保存
             __bgrImg = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2BGR)
             # 保存
-            cv2.imwrite('result.jpg', __bgrImg)
+            cv2.imwrite(fileName, __bgrImg)
             # 消息提示窗口
             QMessageBox.information(self, '提示', '文件保存成功！')
         else:
@@ -299,15 +301,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # 保存文件，覆盖原始文件
     def saveFile(self):
-        self.__saveImg(self.__fileName)
+        __fileName='result.jpg'
+        self.__saveImg(__fileName)
 
     # 文件另存
     def saveFileAs(self):
         # 已经打开了文件才能保存
         if self.__fileName:
-            # 打开文件保存的选择窗口
-            __fileName, _ = QFileDialog.getSaveFileName(self, '保存图片', 'Image', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
-            self.__saveImg(__fileName)
+            try:
+                # 打开文件保存的选择窗口
+                __fileName, _ = QFileDialog.getSaveFileName(self, '保存图片', 'Image', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
+                self.__saveImg(__fileName)
+            except:
+                QMessageBox.information(self, '提示', '文件保存失败！')
         else:
             # 消息提示窗口
             QMessageBox.information(self, '提示', '文件保存失败！')
@@ -592,11 +598,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
                         self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
                         self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
-        i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入:后读入图所占的比重'))
-        if not i:
-            return
-        self.__outImageRGB = cv2.addWeighted(self.org_image, 1 - i, self.trans_image, i, 0)
-        self.__drawImage(self.outImageView, self.__outImageRGB)
+            i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入:后读入图所占的比重'))
+            if not i:
+                return
+            self.__outImageRGB = cv2.addWeighted(self.org_image, 1 - i, self.trans_image, i, 0)
+            self.__drawImage(self.outImageView, self.__outImageRGB)
 
     # 1:1融合
     def __fusionImage(self):
@@ -657,7 +663,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__propertyWindow.slider.setMinimum(-360)
             self.__propertyWindow.spinBox.setMaximum(360)
             self.__propertyWindow.spinBox.setMinimum(-360)
-
+    #保存子函数
     def __baocuncaijian(self, x, y, w, h):
         img = self.__tempImageRGB.copy()
         img = img[y:y + h, x:x + w]
@@ -667,7 +673,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 裁剪事件
     def __caijian(self):
         if self.__fileName:
-            crop = self.__tempImageRGB
+            crop = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2BGR)
             roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
             x, y, w, h = roi
             # print(roi)
@@ -972,22 +978,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             img[res[:, 3], res[:, 2]] = [0, 255, 0]
             self.__outImageRGB=img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
+    def __quyujianceyuan(self):
+        if self.__fileName:
+            try:
+                image = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2RGB)
+                image_copy = image.copy()
+                #灰度处理
+                # cv2.imshow('binary', th2)
 
+                filter = cv2.pyrMeanShiftFiltering(image, 10, 40)
+
+                # 转换成灰度图
+                filter_gray = cv2.cvtColor(filter, cv2.COLOR_BGR2GRAY)
+
+                # 霍夫曼圆圈检测
+                circles = cv2.HoughCircles(filter_gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=100, minRadius=0,
+                                           maxRadius=0)
+                circles = numpy.uint16(numpy.around(circles))
+                # 遍历
+                for circle in circles[0, :]:
+                    cv2.circle(image_copy, (circle[0], circle[1]), circle[2], (0, 0, 255), 2)
+                    cv2.circle(image_copy, (circle[0], circle[1]), 2, (255, 0, 0), 2)
+                self.__outImageRGB=cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
+                self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                QMessageBox.information(self, '检测圆', '识别圆失败！')
+                return
     #轮廓识别
     def __quyulunkuoshibie(self):
         self.shapes = {'triangle': 0, 'rectangle': 0, 'polygons': 0,'multiples':0,'circles': 0}
         if self.__fileName:
-            QMessageBox.information(self,'提示（此模块还不完善）', '请提供轮廓清晰的图片')
-            if len(self.__outImageRGB.shape) > 2:
-                # 灰度化使得三通道RGB图变成单通道灰度图
-                gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
-            else:
-                gray= self.__outImageRGB.copy()
             try:
-                h, w, ch = self.__outImageRGB.shape
+                QMessageBox.information(self,'提示（此模块还不完善）', '请提供轮廓清晰的图片')
+                if len(self.__outImageRGB.shape) > 2:
+                    # 灰度化使得三通道RGB图变成单通道灰度图
+                    gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+                else:
+                    gray= self.__outImageRGB.copy()
                 ret, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
                 contours, layer_num= cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-                g=gray
                 for i in range(len(contours)-1):
                     ep = 0.01 * cv2.arcLength(contours[i], True)
                     ap = cv2.approxPolyDP(contours[i], ep, True)
@@ -1104,7 +1133,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             #print("选取的初始点为：")
             new_seeds = []
             for seed in seeds:
-                print(seed)
+                # print(seed)
                 # 下面是需要注意的一点
                 # 第一： 用鼠标选取的坐标为float类型，需要转为int型
                 # 第二：用鼠标选取的坐标为（W,H），而我们使用函数读取到的图片是（行，列），而这对应到原图是（H,W），所以这里需要调换一下坐标位置，这是很多人容易忽略的一点
