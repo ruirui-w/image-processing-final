@@ -233,7 +233,10 @@ class Ui_MainWindow(object):
         #流年滤镜
         self.liunianAction = QtWidgets.QAction(MainWindow)
         self.liunianAction.setObjectName("liunianAction")
-        #人脸一键美化
+        #一键美化
+        self.meihuaAction = QtWidgets.QAction(MainWindow)
+        self.meihuaAction.setObjectName("meihuaAction")
+        #人脸一键化妆
         self.renlianmakeupAction = QtWidgets.QAction(MainWindow)
         self.renlianmakeupAction.setObjectName("renlianjiemakeupAction")
         #特征描述
@@ -375,6 +378,7 @@ class Ui_MainWindow(object):
         self.lvjingMenu.addAction(self.huaijiuAction)
         self.lvjingMenu.addAction(self.guangyunAction)
         self.lvjingMenu.addAction(self.liunianAction)
+        self.lvjingMenu.addAction(self.meihuaAction)
         self.lvjingMenu.addAction(self.renlianmakeupAction)
 
         self.menubar.addAction(self.fileMenu.menuAction())
@@ -477,7 +481,8 @@ class Ui_MainWindow(object):
         self.huaijiuAction.setText(_translate("MainWindow", "怀旧"))
         self.guangyunAction.setText(_translate("MainWindow", "光晕"))
         self.liunianAction.setText(_translate("MainWindow", "流年"))
-        self.renlianmakeupAction.setText(_translate("MainWindow", "人脸一键美化化妆"))
+        self.meihuaAction.setText(_translate("MainWindow", "一键美化"))
+        self.renlianmakeupAction.setText(_translate("MainWindow", "一键化妆"))
         self.quyujuxingAction.setText(_translate("MainWindow", "最小外接矩形面积"))
         self.quyuzhankongbiAction.setText(_translate("MainWindow", "矩形度"))
         self.quyuxichangduAction.setText(_translate("MainWindow", "细长度"))
