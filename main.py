@@ -2,6 +2,7 @@ import math
 import os
 import random
 import sys
+import winsound
 
 from PIL import Image, ImageOps, ImageDraw, ImageEnhance
 import cv2
@@ -17,7 +18,14 @@ from propertyWindow import Ui_Form
 import face_recognition
 from PIL import Image, ImageDraw
 
-
+face_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_frontalface_alt.xml')
+Leye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_lefteye_2splits.xml')
+Reye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_righteye_2splits.xml')
+eye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_eye.xml')
+simulate_real_time = "true"
+process_eye = 0
+eyeq_len = 5
+eyeq = []
 # 预处理窗口类
 # 就是弹出来的调整各种属性值的小窗口
 class PropertyWindow(QWidget, Ui_Form):
@@ -247,6 +255,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # 关于菜单
         # 关于作者
         self.aboutAction.triggered.connect(self.__aboutAuthor)
+        #学习侦测
+        self.xuexizhenceAction.triggered.connect(self.__kaishi)
 
     # -----------------------------------文件-----------------------------------
     # 打开文件并在主窗口中显示打开的图像
@@ -1959,7 +1969,121 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 关于作者
     def __aboutAuthor(self):
         QMessageBox.information(None, '关于作者', '图像处理软件2.0\n\nCopyright © 2022–2099 数媒2002 李子睿\n\n保留一切权利')
+    # 学习侦测
 
+    def push_val(self,val):
+        if val < 800:
+            if len(eyeq) <= eyeq_len:
+                eyeq.append(val)
+            else:
+                eyeq.append(val)
+                eyeq.pop(0)
+        return self.avg_eyeq()
+    def avg_eyeq(self):
+        # calculate average
+        avg = 0
+        for i in eyeq:
+            avg = avg + i
+        avg = avg / (len(eyeq) + 1)
+        return avg
+    def detect_and_draw(self,img, gray):
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        for (x, y, w, h) in faces:
+            img = cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            roi_gray = gray[int((y + h / 4)):int((y + 0.55 * h)), int((x + 0.13 * w)):int((x + w - 0.13 * w))]
+            roi_color = img[int((y + h / 4)):int((y + 0.55 * h)), int((x + 0.13 * w)):int((x + w - 0.13 * w))]
+            eyes = eye_cascade.detectMultiScale(roi_gray)
+            max_eyes = 2
+            cnt_eye = 0
+            for (ex, ey, ew, eh) in eyes:
+                if (cnt_eye == max_eyes):
+                    break
+                image_name = 'Eye_' + str(cnt_eye)
+
+                cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 1)
+                roi_eye_gray = roi_gray[ey:ey + eh, ex:ex + ew]
+                roi_eye_color = roi_color[ey:ey + eh, ex:ex + ew]
+                # create & normalize histogram ---------
+                hist = cv2.calcHist([roi_eye_gray], [0], None, [256], [0, 256])
+                histn = []
+                max_val = 0
+                for i in hist:
+                    value = int(i[0])
+                    histn.append(value)
+                    if value > max_val:
+                        max_val = value
+                for index, value in enumerate(histn):
+                    histn[index] = ((value * 256) / max_val)
+                threshold = numpy.argmax(histn)
+                roi_eye_gray2 = roi_eye_gray.copy()
+                total_white = 0
+                total_black = 0
+                for i in range(0, roi_eye_gray2.shape[0]):
+                    for j in range(0, roi_eye_gray2.shape[1]):
+                        pixel_value = roi_eye_gray2[i, j]
+                        if pixel_value >= threshold:
+                            roi_eye_gray2[i, j] = 255
+                            total_white = total_white + 1
+                        else:
+                            roi_eye_gray2[i, j] = 0
+                            total_black = total_black + 1
+
+                binary = cv2.resize(roi_eye_gray2, None, fx=2, fy=2)
+                # cv2.imshow('binary', binary)
+                if image_name == "Eye_0":
+                    ag = self.push_val(total_white)
+                    # print image_name, " : ", total_white, " : ", ag
+
+                # print "Black ", total_black
+                # print "White ", total_white
+
+                if simulate_real_time == "true":
+                    pass
+                    # put number on image
+                    if (cnt_eye == 0):
+                        cv2.putText(img, "" + str(total_white), (10, 40), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0))
+                    else:
+                        cv2.putText(img, "" + str(total_white), (520, 40), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0))
+                    cv2.putText(img, "" + str(threshold), (10, 240), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0))
+                else:
+                    # Plot Histogram
+                    plt.subplot(2, 3, ((cnt_eye * 3) + 1)), plt.hist(roi_eye_gray.ravel(), 256, [0, 256])
+                    plt.title(image_name + ' Hist')
+                    # Plot Eye Images
+                    plt.subplot(2, 3, ((cnt_eye * 3) + 2)), plt.imshow(roi_eye_color, 'gray')
+                    plt.title(image_name + ' Image Threshold')
+
+                    # Plot Eye Images after threshold
+                    plt.subplot(2, 3, ((cnt_eye * 3) + 3)), plt.imshow(roi_eye_gray2, 'gray')
+                    plt.title(image_name + ' Image')
+                cnt_eye = cnt_eye + 1
+            if len(eyes) == 0:
+                ag = self.push_val(0)
+            # Decision Making
+            average = self.avg_eyeq()
+            if average > 30:
+                pass
+            else:
+                winsound.Beep(1000, 100)
+        cv2.imshow('frame', img)
+    def __kaishi(self):
+        if simulate_real_time == "true":
+            global cap, frame
+            cap = cv2.VideoCapture(0,cv2.CAP_DSHOW)
+            while True:
+                # time.sleep(1)
+                ret, frame = cap.read()
+                if frame.any() is not None:
+                    cv2.imshow('frame', frame)
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    self.detect_and_draw(frame, gray)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        cap.release()
+                        cv2.destroyAllWindows()
+                        return
+                else:
+                    print("Frame Grabbed Problem")
+                    continue
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

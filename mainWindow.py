@@ -239,6 +239,8 @@ class Ui_MainWindow(object):
         #人脸一键化妆
         self.renlianmakeupAction = QtWidgets.QAction(MainWindow)
         self.renlianmakeupAction.setObjectName("renlianjiemakeupAction")
+        self.xuexizhenceAction = QtWidgets.QAction(MainWindow)
+        self.xuexizhenceAction.setObjectName("xuexizhenceAction")
         #特征描述
         #区域面积
         self.quyumianjiAction = QtWidgets.QAction(MainWindow)
@@ -380,6 +382,8 @@ class Ui_MainWindow(object):
         self.lvjingMenu.addAction(self.liunianAction)
         self.lvjingMenu.addAction(self.meihuaAction)
         self.lvjingMenu.addAction(self.renlianmakeupAction)
+        #学习侦测
+        self.aboutMenu.addAction(self.xuexizhenceAction)
 
         self.menubar.addAction(self.fileMenu.menuAction())
         self.menubar.addAction(self.resetImageMenu.menuAction())
@@ -483,6 +487,7 @@ class Ui_MainWindow(object):
         self.liunianAction.setText(_translate("MainWindow", "流年"))
         self.meihuaAction.setText(_translate("MainWindow", "一键美化"))
         self.renlianmakeupAction.setText(_translate("MainWindow", "一键化妆"))
+        self.xuexizhenceAction.setText(_translate("MainWindow", "学习侦测"))
         self.quyujuxingAction.setText(_translate("MainWindow", "最小外接矩形面积"))
         self.quyuzhankongbiAction.setText(_translate("MainWindow", "矩形度"))
         self.quyuxichangduAction.setText(_translate("MainWindow", "细长度"))
