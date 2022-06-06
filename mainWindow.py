@@ -99,6 +99,10 @@ class Ui_MainWindow(object):
         #Harris菜单
         self.HarrisMenu = QtWidgets.QMenu(self.tezhengMenu)
         self.HarrisMenu.setObjectName("HarrisMenu")
+        #镜像菜单
+        self.jingxiangMenu = QtWidgets.QMenu(self.operateImageMenu)
+        self.jingxiangMenu.setObjectName("jingxiangMenu")
+
 #####  以上是对菜单及子菜单的管理，让菜单管理与act实现管理分开，方便修改
 
 #####  定义操作，此时还未与按钮联系
@@ -130,6 +134,12 @@ class Ui_MainWindow(object):
         self.imageSubtractAction.setObjectName("imageSubtractAction")
         self.imageMultiplyAction = QtWidgets.QAction(MainWindow)
         self.imageMultiplyAction.setObjectName("imageMultiplyAction")
+        self.imagechuizhiAction = QtWidgets.QAction(MainWindow)
+        self.imagechuizhiAction.setObjectName("imagechuizhiAction")
+        self.imageshuipingAction = QtWidgets.QAction(MainWindow)
+        self.imageshuipingAction.setObjectName("imageshuipingAction")
+        self.imagejingxiangduichengAction = QtWidgets.QAction(MainWindow)
+        self.imagejingxiangduichengAction.setObjectName("imagejingxiangduichengAction")
         self.imagefusionAction = QtWidgets.QAction(MainWindow)
         self.imagefusionAction.setObjectName("imagefusionAction")
         self.imagefusionzixuanAction = QtWidgets.QAction(MainWindow)
@@ -293,10 +303,13 @@ class Ui_MainWindow(object):
         self.operateImageMenu.addAction(self.imageAddAction)
         self.operateImageMenu.addAction(self.imageSubtractAction)
         self.operateImageMenu.addAction(self.imageMultiplyAction)
-
+        self.jingxiangMenu.addAction(self.imagechuizhiAction)
+        self.jingxiangMenu.addAction(self.imageshuipingAction)
+        self.jingxiangMenu.addAction(self.imagejingxiangduichengAction)
         self.operateImageMenu.addAction(self.fusionMenu.menuAction())
         self.fusionMenu.addAction(self.imagefusionAction)
         self.fusionMenu.addAction(self.imagefusionzixuanAction)
+        self.operateImageMenu.addAction(self.jingxiangMenu.menuAction())
 
 
         self.operateImageMenu.addAction(self.zoomAction)
@@ -400,6 +413,7 @@ class Ui_MainWindow(object):
         self.sharpMenu.setTitle(_translate("MainWindow", "锐化滤波"))
         self.jiequMenu.setTitle(_translate("MainWindow", "图像截取"))
         self.tezhengMenu.setTitle(_translate("MainWindow", "特征描述"))
+        self.jingxiangMenu.setTitle(_translate("MainWindow", "对称"))
         self.quyumianjiAction.setText(_translate("MainWindow", "面积"))
         self.quyuzhouchangAction.setText(_translate("MainWindow", "周长"))
         self.lvjingMenu.setTitle(_translate("MainWindow", "相片滤镜与美化"))
@@ -416,6 +430,9 @@ class Ui_MainWindow(object):
         self.imageAddAction.setText(_translate("MainWindow", "加"))
         self.imageSubtractAction.setText(_translate("MainWindow", "减"))
         self.imageMultiplyAction.setText(_translate("MainWindow", "乘"))
+        self.imageshuipingAction.setText(_translate("MainWindow", "水平对称"))
+        self.imagejingxiangduichengAction.setText(_translate("MainWindow", "镜像对称"))
+        self.imagechuizhiAction.setText(_translate("MainWindow", "垂直对称"))
         self.imagefusionAction.setText(_translate("MainWindow", "1:1融合"))
         self.imagefusionzixuanAction.setText(_translate("MainWindow", "自定义融合"))
         self.histogramAction.setText(_translate("MainWindow", "图像直方图"))
