@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainWindow.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.4
-
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 #mainwindow->memu add action（窗口与菜单）->translate UI->（菜单与后台）在 main 类中初始化 trigger connect到某一个具体函数
@@ -268,6 +262,9 @@ class Ui_MainWindow(object):
         #圆形度
         self.quyuyuanxingduAction = QtWidgets.QAction(MainWindow)
         self.quyuyuanxingduAction.setObjectName("quyuyuanxingduAction")
+        #球状度
+        self.quyuqiuzhuangduAction = QtWidgets.QAction(MainWindow)
+        self.quyuqiuzhuangduAction.setObjectName("quyuqiuzhuangduAction")
         #圆形检测
         self.quyujianceyuanAction = QtWidgets.QAction(MainWindow)
         self.quyujianceyuanAction.setObjectName("quyujianceyuanAction")
@@ -341,6 +338,8 @@ class Ui_MainWindow(object):
         self.tezhengMenu.addAction(self.quyuxichangduAction)
         #圆形度
         self.tezhengMenu.addAction(self.quyuyuanxingduAction)
+        #球状度
+        self.tezhengMenu.addAction(self.quyuqiuzhuangduAction)
         #重心
         self.tezhengMenu.addAction(self.quyuzhongxinAction)
         #Harris角
@@ -495,5 +494,6 @@ class Ui_MainWindow(object):
         self.quyuHarrisAction.setText(_translate("MainWindow", "Harris角"))
         self.quyusubHarrisAction.setText(_translate("MainWindow", "迭代高精度Harris角"))
         self.quyuyuanxingduAction.setText(_translate("MainWindow", "圆形度"))
+        self.quyuqiuzhuangduAction.setText(_translate("MainWindow", "球状度"))
         self.quyujianceyuanAction.setText(_translate("MainWindow", "检测圆形"))
         self.quyulunkunshibieAction.setText(_translate("MainWindow", "轮廓识别"))

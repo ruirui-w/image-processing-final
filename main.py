@@ -178,6 +178,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.quyuxichangduAction.triggered.connect(self.__quyuxichangdu)
         # 圆形度
         self.quyuyuanxingduAction.triggered.connect(self.__quyuyuanxingdu)
+        #球状度
+        self.quyuqiuzhuangduAction.triggered.connect(self.__quyuqiuzhuangdu)
         # 重心
         self.quyuzhongxinAction.triggered.connect(self.__quyuzhongxin)
         # Harris角
@@ -771,7 +773,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.__drawImage(self.outImageView, self.__outImageRGB)
         else:
             QMessageBox.information(self, '提示', '您还未读入图像！')
-
+    #镜像对称
     def __jingxiangduicheng(self):
         if self.__fileName:
             img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2BGR)
@@ -782,7 +784,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self, '提示', '您还未读入图像！')
 
     # -----------------------------------直方图均衡-----------------------------------
-    # 归一化直方图
+    # 绘制直方图
     def __histogram(self):
         if self.__fileName:
             # 如果是灰度图
@@ -845,6 +847,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
                 contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
                 _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+                #只调用contours中的第一个元素，即一张画面只进行一个目标物体的检测
                 area1 = cv2.contourArea(contours[0])
                 # print(int(area1)) contourArea测量相对较不精准，
                 area2 = stats[1][4]
@@ -913,7 +916,49 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             QMessageBox.information(self, '提示', '您还未读入图像！')
             return
-
+    def __quyuqiuzhuangdu(self):
+        if self.__fileName:
+            try:
+                if self.tezhengflag == 0:
+                    reply = QMessageBox.question(self, '提示', '请确保图像中测量的目标仅有一个', QMessageBox.Yes, QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        self.tezhengflag = 1
+                        return
+                self.tezhengflag = 1
+                if self.__fileName and len(self.__outImageRGB.shape) > 2:
+                    # 灰度化使得三通道RGB图变成单通道灰度图
+                    img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
+                else:
+                    img = self.__outImageRGB.copy()
+                ret, binary = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
+                contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                _, labels, stats, centroids = cv2.connectedComponentsWithStats(binary)
+                length = cv2.arcLength(contours[0], True)
+                area = stats[1][4]
+                raw_dist = numpy.empty(img.shape, dtype=numpy.float32)
+                for i in range(img.shape[0]):
+                    for j in range(img.shape[1]):
+                        raw_dist[i, j] = cv2.pointPolygonTest(contours[0], (j, i), True)
+                # 获取最大值即内接圆半径
+                minVal, maxVal, _, maxDistPt = cv2.minMaxLoc(raw_dist)
+                maxVal=abs(maxVal)
+                # print(maxVal)
+                Rmin=length/(2 * math.pi)
+                # print(Rmin)
+                qiuzhuangdu=maxVal/Rmin
+                if length <= 10 or area <= 10 or qiuzhuangdu > 2:
+                    QMessageBox.information(self, '球状度', '目标识别错误')
+                    return
+                if qiuzhuangdu >= 0.99:
+                    QMessageBox.information(self, '球状度', '目标是圆形，球状度为1')
+                    return
+                QMessageBox.information(self, '球状度', '目标的球状度为%.2f' % qiuzhuangdu)
+            except:
+                QMessageBox.information(self, '球状度', '目标识别错误')
+                return
+        else:
+            QMessageBox.information(self, '提示', '您还未读入图像！')
+            return
     # 区域矩形面积测量
     def __quyujuxing(self):
         if self.__fileName:
@@ -1129,6 +1174,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     gray = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2GRAY)
                 else:
                     gray = self.__outImageRGB.copy()
+                gray=cv2.medianBlur(gray, 5)
                 ret, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
                 contours, layer_num = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
                 for i in range(len(contours) - 1):
@@ -1300,12 +1346,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         x, y, w, h = faceRect
                         # 框出人脸
                         cv2.rectangle(img, (x, y), (x + h, y + w), color, 2)
-                        # 左眼
-                        cv2.circle(img, (x + w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
-                        # 右眼
-                        cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
-                        # 嘴巴
-                        cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8), color)
+                        # # 左眼
+                        # cv2.circle(img, (x + w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                        # # 右眼
+                        # cv2.circle(img, (x + 3 * w // 4, y + h // 4 + 30), min(w // 8, h // 8), color)
+                        # # 嘴巴
+                        # cv2.rectangle(img, (x + 3 * w // 8, y + 3 * h // 4), (x + 5 * w // 8, y + 7 * h // 8), color)
                 self.__outImageRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 self.__drawImage(self.outImageView, self.__outImageRGB)
             except:
@@ -1317,12 +1363,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __renlianjiequ2(self):
         if self.__fileName:
             try:
+                reply = QMessageBox.question(self, '确认完成勾勒操作吗', '提示：请输入单张清晰的人脸素材图', QMessageBox.Yes,
+                                             QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return
                 face_image = self.__outImageRGB.copy()
-                # STEP3: Get the face landmarks list
+                #Get the face landmarks list 获取特征列表
                 face_landmarks_list = face_recognition.face_landmarks(face_image)
                 # print the face landmarks list
                 # print(face_landmarks_list)
-                # STEP4: Loop around to convert to draw objects
+                # STEP4: 循环遍历，分离列表中各个通道的值。Loop around to convert to draw objects
                 for face_landmarks in face_landmarks_list:
                     # convert the numpy array image into pil image object
                     pil_image = Image.fromarray(face_image)
