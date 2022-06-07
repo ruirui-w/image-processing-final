@@ -17,11 +17,15 @@ from mainWindow import Ui_MainWindow
 from propertyWindow import Ui_Form
 import face_recognition
 from PIL import Image, ImageDraw
+from PyQt5.QtWidgets import QWidget, QApplication,\
+    QColorDialog, QFrame, QPushButton
+from PyQt5.QtGui import QColor
+import sys
 
-face_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_frontalface_alt.xml')
-Leye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_lefteye_2splits.xml')
-Reye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_righteye_2splits.xml')
-eye_cascade = cv2.CascadeClassifier('D:/pycharm/Lib/site-packages/cv2/data/haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+Leye_cascade = cv2.CascadeClassifier('aarcascade_lefteye_2splits.xml')
+Reye_cascade = cv2.CascadeClassifier('haarcascade_righteye_2splits.xml')
+eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 simulate_real_time = "true"
 process_eye = 0
 eyeq_len = 5
@@ -1371,7 +1375,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 #Get the face landmarks list 获取特征列表
                 face_landmarks_list = face_recognition.face_landmarks(face_image)
                 # print the face landmarks list
-                # print(face_landmarks_list)
+                print(face_landmarks_list)
                 # STEP4: 循环遍历，分离列表中各个通道的值。Loop around to convert to draw objects
                 for face_landmarks in face_landmarks_list:
                     # convert the numpy array image into pil image object
@@ -1764,17 +1768,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __jiakuang(self):
         color0 = [255, 0, 0]
         if self.__fileName:
+            def color(value):
+                digit = list(map(str, range(10))) + list("abcdef")
+                if isinstance(value, tuple):
+                    string = '#'
+                    for i in value:
+                        a1 = i // 16
+                        a2 = i % 16
+                        string += digit[a1] + digit[a2]
+                        return string
+                elif isinstance(value, str):
+                    a1 = digit.index(value[1]) * 16 + digit.index(value[2])
+                    a2 = digit.index(value[3]) * 16 + digit.index(value[4])
+                    a3 = digit.index(value[5]) * 16 + digit.index(value[6])
+                    return (a1, a2, a3)
             try:
-                pos = self.get_color(1)
-                i = int(pos[0][0])
-                j = int(pos[0][1])
-                color0 = self.im[j][i]
+                # pos = self.get_color(1)
+                # i = int(pos[0][0])
+                # j = int(pos[0][1])
+                # color0 = self.im[j][i]
+                col = QColorDialog.getColor()
+                self.frame = QFrame(self)
+                # 检测用的选择是否合法(点击cancel就是非法,否则就是合法)
+                if col.isValid():
+                    color0=color(col.name())
+                else:
+                    return
                 img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT,
                                          value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()),
                                                 int(str(color0[2]).strip())])
                 self.__outImageRGB = img.copy()
                 self.__drawImage(self.outImageView, self.__outImageRGB)
             except:
+                QMessageBox.information(self, '提示', '边框设置失败')
                 return
         else:
             QMessageBox.information(self, '提示', '您还未读入图像！')
@@ -1956,7 +1982,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             contrast =1.1
             enh_con = ImageEnhance.Contrast(image1)
             image2 = enh_con.enhance(contrast)
-            # #调大饱和度
+            #调大饱和度
             color=1.1
             enh_col = ImageEnhance.Color(image2)
             image3 = enh_col.enhance(color)
@@ -1977,7 +2003,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             try:
                 face_image = self.__outImageRGB.copy()
                 face_landmarks_list = face_recognition.face_landmarks(face_image)
-                # print the face landmarks list
                 # STEP4: Loop around to convert to draw objects
                 for face_landmarks in face_landmarks_list:
                     # convert the numpy array image into pil image object
@@ -2018,7 +2043,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # -----------------------------------关于-----------------------------------
     # 关于作者
     def __aboutAuthor(self):
-        QMessageBox.information(None, '关于作者', '图像处理软件2.0\n\nCopyright © 2022–2099 数媒2002 李子睿\n\n保留一切权利')
+        QMessageBox.information(None, '关于作者', '数字图像处理软件2.0\n\nCopyright © 2022–2099 数媒2002 李子睿\n\n保留一切权利')
     # 学习侦测
 
     def push_val(self,val):
@@ -2077,16 +2102,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         else:
                             roi_eye_gray2[i, j] = 0
                             total_black = total_black + 1
-
                 binary = cv2.resize(roi_eye_gray2, None, fx=2, fy=2)
                 # cv2.imshow('binary', binary)
                 if image_name == "Eye_0":
                     ag = self.push_val(total_white)
-                    # print image_name, " : ", total_white, " : ", ag
-
-                # print "Black ", total_black
-                # print "White ", total_white
-
                 if simulate_real_time == "true":
                     pass
                     # put number on image
@@ -2102,7 +2121,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     # Plot Eye Images
                     plt.subplot(2, 3, ((cnt_eye * 3) + 2)), plt.imshow(roi_eye_color, 'gray')
                     plt.title(image_name + ' Image Threshold')
-
                     # Plot Eye Images after threshold
                     plt.subplot(2, 3, ((cnt_eye * 3) + 3)), plt.imshow(roi_eye_gray2, 'gray')
                     plt.title(image_name + ' Image')

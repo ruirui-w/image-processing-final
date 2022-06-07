@@ -277,14 +277,15 @@ class Ui_MainWindow(object):
         self.resetImageAction.setIcon(style.standardIcon(QStyle.SP_FileDialogBack))
         self.saveFileAsAction.setIcon(style.standardIcon(QStyle.SP_DirLinkIcon))
         self.exitAppAction.setIcon(style.standardIcon(QStyle.SP_BrowserStop))
-        self.fudiaoAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
-        self.maoboliAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
+        self.masaikeAction.setIcon(style.standardIcon(QStyle.SP_DialogHelpButton))
         self.aboutAction.setIcon(style.standardIcon(QStyle.SP_MessageBoxQuestion))
         self.getFileAction.setIcon(style.standardIcon(QStyle.SP_MediaPlay))
+        self.xuexizhenceAction.setIcon(style.standardIcon(QStyle. SP_DesktopIcon))
         #添加快捷按钮键
         self.openFileAction.setShortcut(Qt.CTRL + Qt.Key_O)
         self.saveFileAction.setShortcut(Qt.CTRL + Qt.Key_S)
         self.resetImageAction.setShortcut(Qt.CTRL + Qt.Key_Z)
+        self.xuexizhenceAction.setShortcut(Qt.CTRL + Qt.Key_N)
         #对菜单添加操作
         self.fileMenu.addAction(self.getFileAction)
         self.fileMenu.addAction(self.saveFileAction)
@@ -342,6 +343,7 @@ class Ui_MainWindow(object):
         self.tezhengMenu.addAction(self.quyuqiuzhuangduAction)
         #重心
         self.tezhengMenu.addAction(self.quyuzhongxinAction)
+        self.tezhengMenu.addSeparator()
         #Harris角
         self.tezhengMenu.addAction(self.HarrisMenu.menuAction())
         self.HarrisMenu.addAction(self.quyuHarrisAction)
@@ -379,6 +381,7 @@ class Ui_MainWindow(object):
         self.lvjingMenu.addAction(self.huaijiuAction)
         self.lvjingMenu.addAction(self.guangyunAction)
         self.lvjingMenu.addAction(self.liunianAction)
+        self.lvjingMenu.addSeparator()
         self.lvjingMenu.addAction(self.meihuaAction)
         self.lvjingMenu.addAction(self.renlianmakeupAction)
         #学习侦测
@@ -475,7 +478,7 @@ class Ui_MainWindow(object):
         self.getFileAction.setText(_translate("MainWindow", "摄像头捕捉图片"))
         self.diedaiAction.setText(_translate("MainWindow", "迭代阈值分割"))
         self.zhongziAction.setText(_translate("MainWindow", "区域增长"))
-        self.biankuangAction.setText(_translate("MainWindow", "图像加框"))
+        self.biankuangAction.setText(_translate("MainWindow", "图像颜色加框"))
         self.renlianAction.setText(_translate("MainWindow", "人脸框取"))
         self.renlianjiequAction.setText(_translate("MainWindow", "人脸轮廓勾勒"))
         self.pingtuAction.setText(_translate("MainWindow", "图像拼接"))

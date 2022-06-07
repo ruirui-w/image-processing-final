@@ -1,0 +1,6 @@
+opencv-python~=4.5.5.64
+numpy~=1.22.3
+Pillow~=9.1.0
+PyQt5~=5.15.4
+PySimpleGUI~=4.60.0
+matplotlib~=3.5.2
