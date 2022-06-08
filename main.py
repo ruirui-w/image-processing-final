@@ -344,12 +344,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # 重写窗口关闭事件函数，来关闭所有窗口。因为默认关闭主窗口子窗口依然存在。
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        # reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
-        # if reply == QMessageBox.Yes:
-        sys.exit(0)
-
-    # else:
-    #     return
+        reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            sys.exit(0)
+        else:
+          return
     # 摄像头捕捉事件
     def __getFileAndShowImage(self):
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 参数为视频设备的id
@@ -643,9 +642,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         self.trans_image = numpy.ones((h, w, 3), dtype=numpy.uint8) * 255
                         self.org_image[:h0, :w0, :] = self.__outImageRGB[:, :, :]
                         self.trans_image[:h1, :w1, :] = self.__bgrImg[:, :, :]
-            i = float(PySimpleGUI.popup_get_text('0-1之间', title='请输入:后读入图所占的比重'))
+            else:
+                return
+            i = PySimpleGUI.popup_get_text('0-1之间', title='请输入后读入图所占的比重')
             if not i:
                 return
+            i=float(i)
             self.__outImageRGB = cv2.addWeighted(self.org_image, 1 - i, self.trans_image, i, 0)
             self.__drawImage(self.outImageView, self.__outImageRGB)
         else:
@@ -1701,11 +1703,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __masaike(self):
         if self.__fileName:
             crop = self.__outImageRGB.copy()
-            if len(self.__outImageRGB.shape) < 3:
+            if True :
                 def do_mosaic(img, x, y, w, h, neighbor=9):
                     """
-                    灰度图马赛克单独实现
-                    :param gray_img
+                    马赛克单独实现
+                    :param img
                     :param int x :  马赛克左顶点
                     :param int y:  马赛克左顶点
                     :param int w:  马赛克宽
@@ -1726,40 +1728,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             right_down = (x2, y2)
                             cv2.rectangle(img, left_up, right_down, color, -1)  # 替换为为一个颜值值
                     return img
-
+                crop = cv2.cvtColor(crop, cv2.COLOR_RGB2BGR)
                 roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
                 x, y, w, h = roi
                 cv2.destroyAllWindows()
-                crop = cv2.cvtColor(crop, cv2.COLOR_GRAY2BGR)
                 img_mosaic = do_mosaic(crop, x, y, w, h)
-                img_mosaic = cv2.cvtColor(img_mosaic, cv2.COLOR_BGR2GRAY)
+                img_mosaic = cv2.cvtColor(img_mosaic, cv2.COLOR_BGR2RGB)
                 self.__outImageRGB = img_mosaic.copy()
                 self.__drawImage(self.outImageView, self.__outImageRGB)
                 return
-            else:
-                crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
-                roi = cv2.selectROI(windowName="original", img=crop, showCrosshair=True, fromCenter=False)
-                x, y, w, h = roi
-                cv2.destroyAllWindows()
-                img = self.__outImageRGB.copy()
-                # img1 = img[y:y+h, x:x+w]
-                # height, width = img1.shape[0:2]
-                # 遍历每一个像素点
-                for row in range(x, x + w):
-                    for col in range(y, y + h):
-                        # 如果正好为10的倍数的行并且是10的倍数的列
-                        if row % 10 == 0 and col % 10 == 0:
-                            # 获取到这个像素点的bgr三原色
-                            try:
-                                b, g, r = img[row, col]
-                            except:
-                                b, g, r = 0, 0, 0
-                            # 遍历这个像素点旁边的100个像素点 都等于中间这个像素点
-                            for i in range(10):
-                                for j in range(10):
-                                    img[col + j, row + i] = b, g, r
-                self.__outImageRGB = img.copy()
-                self.__drawImage(self.outImageView, self.__outImageRGB)
         else:
             QMessageBox.information(self, '提示', '您还未读入图像！')
             return
@@ -1794,6 +1771,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     color0=color(col.name())
                 else:
                     return
+                print(col)
                 img = cv2.copyMakeBorder(self.__outImageRGB, 20, 20, 20, 20, cv2.BORDER_CONSTANT,
                                          value=[int(str(color0[0]).strip()), int(str(color0[1]).strip()),
                                                 int(str(color0[2]).strip())])
