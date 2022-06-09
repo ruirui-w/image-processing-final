@@ -344,11 +344,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # 重写窗口关闭事件函数，来关闭所有窗口。因为默认关闭主窗口子窗口依然存在。
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        reply = QMessageBox.question(self, '警告', '确认退出？', QMessageBox.Yes, QMessageBox.No)
-        if reply == QMessageBox.Yes:
             sys.exit(0)
-        else:
-          return
     # 摄像头捕捉事件
     def __getFileAndShowImage(self):
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 参数为视频设备的id
