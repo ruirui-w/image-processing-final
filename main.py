@@ -313,7 +313,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # 已经打开了文件才能保存
         if self.__fileName:
             # RGB转BRG空间后才能通过opencv正确保存
-            __bgrImg = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_RGB2BGR)
+            if len(self.__outImageRGB) == 3:
+                __bgrImg = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2RGB)
+            else:
+                __bgrImg = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_GRAY2RGB)
             # 保存
             cv2.imwrite(fileName, __bgrImg)
             # 消息提示窗口
@@ -576,7 +579,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 __bgrImg = cv2.imread(__fileName)
                 # 图片尺寸相同才能进行运算
                 if self.__outImageRGB.shape == __bgrImg.shape:
-                    # 一定要转颜色空间！！！
+                    # 一定要转颜色空间
                     __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                     self.__outImageRGB = func(self.__outImageRGB, __rgbImg)
                     self.__drawImage(self.outImageView, self.__outImageRGB)
@@ -586,7 +589,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     if reply == QMessageBox.No:
                         return
                     else:
-                        # 一定要转颜色空间！
+                        # 一定要转颜色空间，还要分开讨论！
                         __rgbImg = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
                         h0, w0 = self.__outImageRGB.shape[0], self.__outImageRGB.shape[1]  # cv2 读取出来的是h,w,c
                         h1, w1 = __rgbImg.shape[0], __rgbImg.shape[1]
@@ -620,7 +623,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             __fileName, _ = QFileDialog.getOpenFileName(self, '选择图片', '.', 'Image Files(*.png *.jpeg *.jpg *.bmp)')
             if __fileName and os.path.exists(__fileName):
                 self.__bgrImg = cv2.imread(__fileName)
-                self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
+                __rgbImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
                 self.org_image = self.__outImageRGB.copy()
                 self.trans_image = self.__bgrImg.copy()
                 if self.__outImageRGB.shape != self.__bgrImg.shape:
@@ -657,7 +660,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if __fileName and os.path.exists(__fileName):
                 self.__bgrImg = cv2.imread(__fileName)
                 # 图片尺寸相同才能进行运算
-                self.__bgrImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
+                __rgbImg = cv2.cvtColor(self.__bgrImg, cv2.COLOR_BGR2RGB)
                 if self.__outImageRGB.shape != self.__bgrImg.shape:
                     # 图片尺寸相同才能进行运算
                     reply = QMessageBox.question(self, '确认完成操作吗', '提示：图片尺寸不一致，操作可能不好', QMessageBox.Yes,
@@ -1149,8 +1152,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 filter_gray = cv2.cvtColor(filter, cv2.COLOR_BGR2GRAY)
 
                 # 霍夫曼圆圈检测
-                circles = cv2.HoughCircles(filter_gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=100, minRadius=0,
-                                           maxRadius=0)
+                circles = cv2.HoughCircles(filter_gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=100)
                 circles = numpy.uint16(numpy.around(circles))
                 # 遍历
                 for circle in circles[0, :]:
@@ -1230,11 +1232,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __diedai(self):
         if self.__fileName:
             if len(self.__outImageRGB.shape) == 3:
-                reply = QMessageBox.question(self, '确认完成迭代操作吗', '提示：当前图片不是灰度图哦，迭代效果可能不好', QMessageBox.Yes,
-                                             QMessageBox.No)
-                if reply == QMessageBox.No:
-                    return
-                else:
                     initthre = numpy.mean(self.__outImageRGB)
                     # 阈值迭代
                     thresh = self.Iterate_Thresh(self.__outImageRGB, initthre, 50)
@@ -1629,8 +1626,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             pass
                         new_img[i, j] = new_value
                 return new_img
-
-            gray_img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2GRAY)
+            if len(self.__outImageRGB.shape) == 3:
+                gray_img = cv2.cvtColor(self.__outImageRGB, cv2.COLOR_BGR2GRAY)
+            else:
+                gray_img = self.__outImageRGB.copy()
             new_img = Filter_Fudiao(gray_img)
             self.__outImageRGB = new_img.copy()
             self.__drawImage(self.outImageView, self.__outImageRGB)
@@ -1662,7 +1661,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __katonghua(self):
         if self.__fileName:
             def edge_mask(img, line_size, blur_value):
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                if len(self.__outImageRGB.shape) == 3:
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                else:
+                    gray=img.copy()
                 gray_blur = cv2.medianBlur(gray, blur_value)
                 edges = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, line_size,
                                               blur_value)
@@ -1782,6 +1784,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def __ronghekuang(self):
         if self.__fileName:
+
             ak1 = self.__outImageRGB.copy()
             ak2 = self.__outImageRGB.copy()
             h, w, s = ak1.shape
@@ -1792,6 +1795,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.__fileName = __fileName
                 # 读入，记得转换颜色空间！！！
                 __bgrImg = cv2.imread(self.__fileName)
+
                 ak2 = cv2.cvtColor(__bgrImg, cv2.COLOR_BGR2RGB)
             else:
                 return
@@ -1859,25 +1863,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 怀旧
     def __huaijiu(self):
         if self.__fileName:
-            img = self.__outImageRGB.copy()
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            height, width, n = img.shape
-            img2 = img.copy()
-            for i in range(height):
-                for j in range(width):
-                    b = img[i, j][0]
-                    g = img[i, j][1]
-                    r = img[i, j][2]
-                    # 计算新的图像中的RGB值
-                    B = int(0.273 * r + 0.535 * g + 0.131 * b)
-                    G = int(0.347 * r + 0.683 * g + 0.167 * b)
-                    R = int(0.395 * r + 0.763 * g + 0.188 * b)  # 约束图像像素值，防止溢出
-                    img2[i, j][0] = max(0, min(B, 255))
-                    img2[i, j][1] = max(0, min(G, 255))
-                    img2[i, j][2] = max(0, min(R, 255))
-                # 显示图像
-                self.__outImageRGB = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
-                self.__drawImage(self.outImageView, self.__outImageRGB)
+            try:
+                if len(self.__outImageRGB.shape) < 3:
+                    QMessageBox.information(self, '提示', '需要读入真彩色图！')
+                    return
+                img = self.__outImageRGB.copy()
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                height, width, n = img.shape
+                img2 = img.copy()
+                for i in range(height):
+                    for j in range(width):
+                        b = img[i, j][0]
+                        g = img[i, j][1]
+                        r = img[i, j][2]
+                        # 计算新的图像中的RGB值
+                        B = int(0.273 * r + 0.535 * g + 0.131 * b)
+                        G = int(0.347 * r + 0.683 * g + 0.167 * b)
+                        R = int(0.395 * r + 0.763 * g + 0.188 * b)  # 约束图像像素值，防止溢出
+                        img2[i, j][0] = max(0, min(B, 255))
+                        img2[i, j][1] = max(0, min(G, 255))
+                        img2[i, j][2] = max(0, min(R, 255))
+                    # 显示图像
+                    self.__outImageRGB = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+                    self.__drawImage(self.outImageView, self.__outImageRGB)
+            except:
+                QMessageBox.information(self, '提示', '怀旧特效实现错误')
+                return
         else:
             QMessageBox.information(self, '提示', '您还未读入图像！')
             return
@@ -1885,8 +1896,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 光晕
     def __guangyun(self):
         if self.__fileName:
-            img = self.__outImageRGB.copy()
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            if len(self.__outImageRGB.shape) < 3:
+                img = self.__outImageRGB.copy()
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            else:
+                img = self.__outImageRGB.copy()
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             rows, cols = img.shape[:2]
             centerX = rows / 2 - 20
             centerY = cols / 2 + 20
@@ -1924,6 +1939,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 流年
     def __liunian(self):
         if self.__fileName:
+            if len(self.__outImageRGB.shape) < 3:
+                QMessageBox.information(self, '提示', '需要读入真彩色图！')
+                return
             img = self.__outImageRGB.copy()
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             rows, cols = img.shape[:2]
@@ -1945,6 +1963,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #一键美化
     def __renlianmeihua(self):
         if self.__fileName:
+            if len(self.__outImageRGB.shape) < 3:
+                QMessageBox.information(self, '提示', '需要读入真彩色图！')
+                return
             img=self.__outImageRGB.copy()
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             image=Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
